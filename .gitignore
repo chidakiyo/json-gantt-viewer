@@ -1,0 +1,9 @@
+# 貼り付け作業の一時スクリーンショット（成果物ではない）
+uploads/
+
+# OS / エディタが生成するゴミ
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

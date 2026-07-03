@@ -29,18 +29,19 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.boardRef = React.createRef();
+    const saved = this.loadPrefs();
     this.state = {
-      lang: props.lang || 'ja',
-      variant: props.variant || 'A',
-      density: props.density || 'default',
-      palette: props.palette || 'ocean',
+      lang: saved.lang || props.lang || 'ja',
+      variant: saved.variant || props.variant || 'A',
+      density: saved.density || props.density || 'default',
+      palette: saved.palette || props.palette || 'ocean',
       outLv: 3,
-      mode: 'week',
+      mode: saved.mode || 'week',
       collapsed: {},
       openMenu: null,
-      layers: { plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true },
-      cols: { assignee:true, workload:true, duration:true, progress:true },
-      barLabels: { dates:false, name:false, owner:false },
+      layers: Object.assign({ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true }, saved.layers),
+      cols: Object.assign({ assignee:true, workload:true, duration:true, progress:true }, saved.cols),
+      barLabels: Object.assign({ dates:false, name:false, owner:false }, saved.barLabels),
       hover: null,
       sel: null,
       tip: null,
@@ -60,6 +61,12 @@ class Component extends DCLogic {
     });
   }
   componentWillUnmount(){ document.removeEventListener('mousedown', this._closeMenu); }
+
+  // ---------- preferences persistence ----------
+  get PREF_KEY(){ return 'jsonGanttViewer.prefs.v1'; }
+  loadPrefs(){ try{ const s=localStorage.getItem(this.PREF_KEY); return s? JSON.parse(s):{}; }catch(e){ return {}; } }
+  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels })); }catch(e){} }
+  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
   get TODAY(){ return this.pd('2026-07-02'); }
@@ -122,14 +129,14 @@ class Component extends DCLogic {
 
   get I18N(){ return {
     ja:{ title:'ガントチャート ビューアー', subtitle:'ソフトウェア開発ロードマップ', today:'本日', scale:'尺度', day:'日', week:'週', month:'月',
-      layers:'表示レイヤー', columns:'列', design:'デザイン', jumpToday:'本日へ',
+      layers:'表示レイヤー', columns:'列', design:'デザイン', jumpToday:'本日へ', resetPrefs:'表示設定を初期化',
       labels:'バー注記', lbDates:'開始/終了日（外側）', lbName:'タスク名（右横）', lbOwner:'担当者（左横・アバター）',
       task:'タスク', owner:'担当', effort:'工数', days:'期間', progress:'進捗',
       lPlan:'予定バー', lProgress:'実績・進捗', lMs:'マイルストーン', lDeps:'依存関係', lCrit:'クリティカルパス', lIna:'イナズマ線', lToday:'本日線', lWeekend:'週末シェード', lHoliday:'祝日', lGrid:'グリッド線',
       legend:'凡例', ontrack:'順調', risk:'要注意', delay:'遅延', done:'完了', notstarted:'未着手', critical:'クリティカル',
       plan:'予定', actual:'実績', of:'', pd:'人日', overall:'全体進捗' },
     en:{ title:'Gantt Chart Viewer', subtitle:'Software delivery roadmap', today:'Today', scale:'Scale', day:'Day', week:'Week', month:'Month',
-      layers:'Layers', columns:'Columns', design:'Design', jumpToday:'Today',
+      layers:'Layers', columns:'Columns', design:'Design', jumpToday:'Today', resetPrefs:'Reset view settings',
       labels:'Bar labels', lbDates:'Start/end dates (outside)', lbName:'Task name (right)', lbOwner:'Owner (left, avatar)',
       task:'Task', owner:'Owner', effort:'Effort', days:'Days', progress:'Progress',
       lPlan:'Plan bars', lProgress:'Actual / progress', lMs:'Milestones', lDeps:'Dependencies', lCrit:'Critical path', lIna:'Slip line', lToday:'Today line', lWeekend:'Weekend shade', lHoliday:'Holidays', lGrid:'Grid lines',
@@ -343,6 +350,11 @@ class Component extends DCLogic {
     }catch(e){ window.alert((this.state.lang==='ja'?'JSONの読み込みに失敗しました:\n':'Failed to load JSON:\n')+e.message); } };
     r.readAsText(f); ev.target.value=''; }
   resetDoc(){ this.setState({doc:null, fileName:null, collapsed:{}, outLv:3, sel:null}); }
+  resetPrefs(){ try{ localStorage.removeItem(this.PREF_KEY); }catch(e){}
+    this.setState({ lang:'ja', variant:'A', density:'default', palette:'ocean', mode:'week', outLv:3,
+      layers:{ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true },
+      cols:{ assignee:true, workload:true, duration:true, progress:true },
+      barLabels:{ dates:false, name:false, owner:false }, openMenu:null }); }
   showTip(ev,d){ this.setState({tip:{d, x:ev.clientX, y:ev.clientY}}); }
   hideTip(){ if(this.state.tip) this.setState({tip:null}); }
   select(r){ if(!r) return; const rows=this.buildRows(); const idx=rows.findIndex(x=>x.id===r.id); this.setState({sel:r.id}); this.ensureVisible(idx); const el=this.boardRef.current; if(el) el.focus({preventScroll:true}); }
@@ -511,6 +523,12 @@ class Component extends DCLogic {
       e('div',{style:{width:1,height:26,background:T.gridStrong}}),
       // language
       this.seg([{k:'ja',label:'日本語'},{k:'en',label:'EN'}], st.lang, l=>this.setState({lang:l}), T),
+      // reset view settings
+      e('button',{onClick:()=>this.resetPrefs(), title:L.resetPrefs, 'aria-label':L.resetPrefs,
+        style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.faint,cursor:'pointer',width:30,height:30,borderRadius:8,display:'inline-flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto',padding:0,transition:'all .15s'},
+        onMouseEnter:ev=>{ev.currentTarget.style.color=T.dim; ev.currentTarget.style.borderColor=T.dim;}, onMouseLeave:ev=>{ev.currentTarget.style.color=T.faint; ev.currentTarget.style.borderColor=T.gridStrong;}},
+        e('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+          e('path',{d:'M3 12a9 9 0 1 0 3-6.7L3 8'}), e('path',{d:'M3 3v5h5'}))),
     );
   }
 

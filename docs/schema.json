@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/json-gantt-viewer/docs/schema.json",
+  "$id": "https://raw.githubusercontent.com/chidakiyo/json-gantt-viewer/master/docs/schema.json",
   "title": "json-gantt-viewer データスキーマ",
   "description": "ガントチャートビューアーが読み込む JSON の構造。人間可読な解説は docs/DATA-SCHEMA.md を参照。日付はすべて YYYY-MM-DD。",
   "type": "object",

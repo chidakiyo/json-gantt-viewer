@@ -15,7 +15,8 @@
 |---|---|---|
 | `src/Gantt Viewer.dc.html` | Design が主、Code も可 | **一次ソース**。UI・描画ロジックはすべてここ。1ファイル完結。 |
 | `src/support.js` | 自動生成 | **手で編集しない**。Design ランタイム。 |
-| `dist/GanttViewer.html` | ビルド成果物 | **直接編集しない**。`src/` から再生成する。 |
+| `dist/GanttViewer.html` | ビルド成果物 | **直接編集しない**。`node scripts/sync-dist.mjs` で `src/` から同期する。 |
+| `scripts/sync-dist.mjs` | Code | src → dist 同期スクリプト。範囲と限界は `docs/CC-HANDOFF.md`。 |
 | `docs/DATA-SCHEMA.md` | 合意で更新 | データ契約。破壊的変更は Design・Code 双方で合意。 |
 | `examples/*.json` | Code / AI | サンプルデータ。スキーマ準拠なら自由に追加可。 |
 
@@ -28,8 +29,9 @@
 
 ## ビルド（src → dist）
 
-`src/Gantt Viewer.dc.html` を単一 HTML に束ねたものが `dist/GanttViewer.html`。
-このバンドルは Design 環境のツールで生成する。Code 側で純粋な静的配布物が必要な場合は、`src` をブラウザで開いた DOM をそのまま保存するか、Design に再バンドルを依頼する。
+`src/Gantt Viewer.dc.html` を単一 HTML に束ねたものが `dist/GanttViewer.html`。初回生成は Design 環境のバンドラーで行う。
+**日常の同期は Code 側で完結**: `src/` を変更したら `node scripts/sync-dist.mjs` を実行（Component ロジック・props・インラインスタイルを dist に反映。依存ゼロ）。
+例外: `<helmet>`（フォント・@keyframes）や `src/support.js` の変更は同期不可 — スクリプトが検知して中断するので、Design に再バンドルを依頼する。詳細は `docs/BUNDLE.md` / `docs/CC-HANDOFF.md`。
 **`src/` を変更したら必ず `dist/` を更新して同期する。**
 
 ## 動作確認

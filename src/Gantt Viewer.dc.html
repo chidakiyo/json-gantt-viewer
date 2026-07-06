@@ -44,6 +44,7 @@ class Component extends DCLogic {
       palette: saved.palette || props.palette || 'ocean',
       outLv: 3,
       mode: saved.mode || 'week',
+      zoom: saved.zoom || 1,
       collapsed: {},
       openMenu: null,
       layers: Object.assign({ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true }, saved.layers),
@@ -84,11 +85,11 @@ class Component extends DCLogic {
   // ---------- preferences ----------
   get PREF_KEY(){ return 'jsonGanttViewer.prefs.v1'; }
   loadPrefs(){ try{ const s=localStorage.getItem(this.PREF_KEY); return s? JSON.parse(s):{}; }catch(e){ return {}; } }
-  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave })); }catch(e){} }
-  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
+  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, zoom:st.zoom })); }catch(e){} }
+  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.1.0 · 2026-07-06'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.2.0 · 2026-07-06'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -145,6 +146,7 @@ class Component extends DCLogic {
   get I18N(){ return {
     ja:{ title:'ガントチャート ビューアー', subtitle:'ソフトウェア開発ロードマップ', today:'本日', scale:'尺度', day:'日', week:'週', month:'月',
       layers:'表示レイヤー', columns:'列', design:'デザイン', jumpToday:'本日へ', resetPrefs:'表示設定を初期化',
+      zoomIn:'横幅を拡大', zoomOut:'横幅を縮小', zoomReset:'100% に戻す', zoomHint:'横幅の倍率',
       labels:'バー注記', lbDates:'開始/終了日（外側）', lbName:'タスク名（右横）', lbOwner:'担当者（左横・アバター）',
       task:'タスク', owner:'担当', effort:'工数', days:'期間', progress:'進捗',
       lPlan:'予定バー', lProgress:'実績・進捗', lMs:'マイルストーン', lDeps:'依存関係', lCrit:'クリティカルパス', lIna:'イナズマ線', lToday:'本日線', lWeekend:'週末シェード', lHoliday:'祝日', lGrid:'グリッド線',
@@ -160,6 +162,7 @@ class Component extends DCLogic {
       fsUnsupported:'このブラウザは直接上書きに未対応のため、ダウンロード保存します' },
     en:{ title:'Gantt Chart Viewer', subtitle:'Software delivery roadmap', today:'Today', scale:'Scale', day:'Day', week:'Week', month:'Month',
       layers:'Layers', columns:'Columns', design:'Design', jumpToday:'Today', resetPrefs:'Reset view settings',
+      zoomIn:'Zoom in (width)', zoomOut:'Zoom out (width)', zoomReset:'Reset to 100%', zoomHint:'Horizontal zoom',
       labels:'Bar labels', lbDates:'Start/end dates (outside)', lbName:'Task name (right)', lbOwner:'Owner (left, avatar)',
       task:'Task', owner:'Owner', effort:'Effort', days:'Days', progress:'Progress',
       lPlan:'Plan bars', lProgress:'Actual / progress', lMs:'Milestones', lDeps:'Dependencies', lCrit:'Critical path', lIna:'Slip line', lToday:'Today line', lWeekend:'Weekend shade', lHoliday:'Holidays', lGrid:'Grid lines',
@@ -348,6 +351,7 @@ class Component extends DCLogic {
   resetDoc(){ this.fileHandle=null; this.past=[]; this.future=[]; this.setState({doc:null, fileName:null, dirty:false, collapsed:{}, outLv:3, sel:null}); }
   resetPrefs(){ try{ localStorage.removeItem(this.PREF_KEY); }catch(e){}
     this.setState({ lang:'ja', variant:'A', density:'default', palette:'ocean', mode:'week', outLv:3, autoSave:false,
+      zoom:1,
       layers:{ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true },
       cols:{ assignee:true, workload:true, duration:true, progress:true },
       barLabels:{ dates:false, name:false, owner:false }, openMenu:null }); }
@@ -375,7 +379,7 @@ class Component extends DCLogic {
     if(!max) max=this.addD(min,30);
     const cs = this.sow(this.som(min));
     let ce = this.eom(max); ce = this.addD(this.sow(ce), 13);
-    const px = { day:34, week:12, month:5 }[this.state.mode];
+    const px = { day:34, week:12, month:5 }[this.state.mode] * (this.state.zoom || 1);
     const totalDays = this.dd(cs,ce)+1;
     return { cs, ce, px, totalDays, w: totalDays*px };
   }
@@ -462,6 +466,14 @@ class Component extends DCLogic {
     this.setState({collapsed:c, outLv:lv}); }
   setMode(m){ const el=this.boardRef.current; const g0=this.geo(); const cx = el? (el.scrollLeft+el.clientWidth/2 - this.leftW())/g0.px : 0;
     this.setState({mode:m}, ()=>{ const g=this.geo(); const el2=this.boardRef.current; if(el2) el2.scrollLeft=Math.max(0, cx*g.px + this.leftW() - el2.clientWidth/2); }); }
+  get ZOOMS(){ return [0.5, 0.75, 1, 1.25, 1.5, 2, 3]; }
+  setZoom(z){ z=Math.max(0.5, Math.min(3, z)); if(z===this.state.zoom) return;
+    const el=this.boardRef.current; const g0=this.geo(); const cx = el? (el.scrollLeft+el.clientWidth/2 - this.leftW())/g0.px : 0;
+    this.setState({zoom:z}, ()=>{ const g=this.geo(); const el2=this.boardRef.current; if(el2) el2.scrollLeft=Math.max(0, cx*g.px + this.leftW() - el2.clientWidth/2); }); }
+  stepZoom(dir){ const zs=this.ZOOMS, z=this.state.zoom||1;
+    let i=zs.findIndex(v=>Math.abs(v-z)<0.001); if(i<0){ i=zs.findIndex(v=>v>z); if(i<0) i=zs.length-1; if(dir<0) i--; }
+    else i+=dir;
+    this.setZoom(zs[Math.max(0, Math.min(zs.length-1, i))]); }
   toggleLayer(k){ this.setState(st=>({layers:{...st.layers,[k]:!st.layers[k]}})); }
   toggleCol(k){ this.setState(st=>({cols:{...st.cols,[k]:!st.cols[k]}})); }
   jumpToday(){ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollTo({left:Math.max(0,this.dateToX(this.TODAY,g)-340), behavior:'smooth'}); }
@@ -613,7 +625,17 @@ class Component extends DCLogic {
       e('div',{style:{width:1,height:26,background:T.gridStrong}}),
       e('div',{style:{display:'flex',alignItems:'center',gap:8,flex:'0 0 auto'}},
         e('span',{style:{fontSize:11,fontWeight:600,color:T.faint,whiteSpace:'nowrap'}}, L.scale),
-        this.seg([{k:'day',label:L.day},{k:'week',label:L.week},{k:'month',label:L.month}], st.mode, m=>this.setMode(m), T)),
+        this.seg([{k:'day',label:L.day},{k:'week',label:L.week},{k:'month',label:L.month}], st.mode, m=>this.setMode(m), T),
+        (()=>{ const z=st.zoom||1;
+          const zbtn=(sym,dir,dis,tt)=>e('button',{key:sym,onClick:()=>this.stepZoom(dir),disabled:dis,title:tt,'aria-label':tt,
+            style:{border:'none',background:'transparent',color:dis?this.hex(T.faint,.45):T.dim,cursor:dis?'default':'pointer',width:24,height:24,borderRadius:6,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,padding:0,lineHeight:1},
+            onMouseEnter:ev=>{ if(!dis) ev.currentTarget.style.background=T.weekend; }, onMouseLeave:ev=>{ ev.currentTarget.style.background='transparent'; }}, sym);
+          return e('div',{key:'zoom',title:L.zoomHint,style:{display:'inline-flex',alignItems:'center',gap:1,border:'1px solid '+T.gridStrong,background:T.panel,borderRadius:8,padding:'2px 3px'}},
+            zbtn('−',-1, z<=this.ZOOMS[0], L.zoomOut),
+            e('button',{key:'pct',onClick:()=>this.setZoom(1),title:L.zoomReset,'aria-label':L.zoomReset,
+              style:{border:'none',background:'transparent',color:z===1?T.faint:T.dim,cursor:'pointer',minWidth:38,height:24,padding:'0 2px',fontSize:10.5,fontWeight:600,fontFamily:"'JetBrains Mono','Inter',monospace",textAlign:'center'}},
+              Math.round(z*100)+'%'),
+            zbtn('+',1, z>=this.ZOOMS[this.ZOOMS.length-1], L.zoomIn)); })()),
 
       e('div',{style:{position:'relative'},'data-menu':true},
         iconBtn('◧ '+L.layers, st.openMenu==='layers', ()=>this.setState(s=>({openMenu:s.openMenu==='layers'?null:'layers'}))),

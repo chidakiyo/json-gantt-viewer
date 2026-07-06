@@ -100,9 +100,9 @@ async function main() {
   );
 
   // 書き戻し（template タグの前後はそのまま）
-  // ⚠ JSON.stringify は "/" をエスケープしないため、そのままでは JSON 内に生の
-  //   </script> が現れて template タグが途中で閉じ、dist が壊れる。
-  //   "</" → "<\/"（JSON で合法なエスケープ）にして防ぐ。
+  // ⚠ JSON.stringify は '/' をエスケープしない。生の </script> が JSON 文字列内に残ると
+  //   <script type="__bundler/template"> ブロックが途中で閉じ、dist が壊れる。
+  //   '</' → '<\/' に変換する（valid な JSON エスケープ。parse すると同一内容に戻る）。
   const newJson = JSON.stringify(template).replace(/<\//g, '<\\/');
   const before = distHtml.slice(0, contentStart);
   const after  = distHtml.slice(closeIdx);

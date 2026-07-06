@@ -91,12 +91,12 @@
           "rose": true
         }
       ],
-      "phases": [
+      "children": [
         {
           "id": "p1.1",
           "ja": "現状調査・評価",
           "en": "Assessment",
-          "tasks": [
+          "children": [
             {
               "id": "p1.1.1",
               "ja": "依存関係の棚卸し",
@@ -161,7 +161,7 @@
           "id": "p1.2",
           "ja": "アーキテクチャ設計",
           "en": "Architecture design",
-          "tasks": [
+          "children": [
             {
               "id": "p1.2.1",
               "ja": "サービス分割設計",
@@ -248,7 +248,7 @@
           "id": "p1.3",
           "ja": "基盤実装",
           "en": "Core build",
-          "tasks": [
+          "children": [
             {
               "id": "p1.3.1",
               "ja": "共通ライブラリ",
@@ -335,7 +335,7 @@
           "id": "p1.4",
           "ja": "移行",
           "en": "Migration",
-          "tasks": [
+          "children": [
             {
               "id": "p1.4.1",
               "ja": "移行スクリプト",
@@ -422,7 +422,7 @@
           "id": "p1.5",
           "ja": "検証・安定化",
           "en": "Stabilization",
-          "tasks": [
+          "children": [
             {
               "id": "p1.5.1",
               "ja": "負荷試験",
@@ -506,12 +506,12 @@
           "rose": true
         }
       ],
-      "phases": [
+      "children": [
         {
           "id": "p2.1",
           "ja": "企画・要件",
           "en": "Discovery",
-          "tasks": [
+          "children": [
             {
               "id": "p2.1.1",
               "ja": "ユースケース定義",
@@ -576,7 +576,7 @@
           "id": "p2.2",
           "ja": "データ整備",
           "en": "Data pipeline",
-          "tasks": [
+          "children": [
             {
               "id": "p2.2.1",
               "ja": "学習データ収集",
@@ -643,7 +643,7 @@
           "id": "p2.3",
           "ja": "モデル開発",
           "en": "Modeling",
-          "tasks": [
+          "children": [
             {
               "id": "p2.3.1",
               "ja": "ベースライン構築",
@@ -730,7 +730,7 @@
           "id": "p2.4",
           "ja": "プロダクト統合",
           "en": "Product integration",
-          "tasks": [
+          "children": [
             {
               "id": "p2.4.1",
               "ja": "アシスタントUI",
@@ -797,7 +797,7 @@
           "id": "p2.5",
           "ja": "評価・ローンチ",
           "en": "Eval & launch",
-          "tasks": [
+          "children": [
             {
               "id": "p2.5.1",
               "ja": "社内ドッグフード",
@@ -901,12 +901,12 @@
           "rose": true
         }
       ],
-      "phases": [
+      "children": [
         {
           "id": "p3.1",
           "ja": "要件定義",
           "en": "Requirements",
-          "tasks": [
+          "children": [
             {
               "id": "p3.1.1",
               "ja": "料金体系整理",
@@ -971,7 +971,7 @@
           "id": "p3.2",
           "ja": "設計",
           "en": "Design",
-          "tasks": [
+          "children": [
             {
               "id": "p3.2.1",
               "ja": "課金ドメイン設計",
@@ -1038,7 +1038,7 @@
           "id": "p3.3",
           "ja": "実装",
           "en": "Implementation",
-          "tasks": [
+          "children": [
             {
               "id": "p3.3.1",
               "ja": "課金エンジン",
@@ -1125,7 +1125,7 @@
           "id": "p3.4",
           "ja": "テスト・移行",
           "en": "Test & migrate",
-          "tasks": [
+          "children": [
             {
               "id": "p3.4.1",
               "ja": "結合テスト",
@@ -1229,12 +1229,12 @@
           "rose": true
         }
       ],
-      "phases": [
+      "children": [
         {
           "id": "p4.1",
           "ja": "企画",
           "en": "Planning",
-          "tasks": [
+          "children": [
             {
               "id": "p4.1.1",
               "ja": "市場調査",
@@ -1279,7 +1279,7 @@
           "id": "p4.2",
           "ja": "デザイン",
           "en": "Design",
-          "tasks": [
+          "children": [
             {
               "id": "p4.2.1",
               "ja": "UXフロー",
@@ -1366,7 +1366,7 @@
           "id": "p4.3",
           "ja": "開発",
           "en": "Development",
-          "tasks": [
+          "children": [
             {
               "id": "p4.3.1",
               "ja": "共通基盤",
@@ -1453,7 +1453,7 @@
           "id": "p4.4",
           "ja": "QA",
           "en": "QA",
-          "tasks": [
+          "children": [
             {
               "id": "p4.4.1",
               "ja": "テスト計画",
@@ -1540,7 +1540,7 @@
           "id": "p4.5",
           "ja": "リリース",
           "en": "Release",
-          "tasks": [
+          "children": [
             {
               "id": "p4.5.1",
               "ja": "ストア申請準備",

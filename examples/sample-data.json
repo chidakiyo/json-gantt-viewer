@@ -1,74 +1,151 @@
 {
-  "$comment": "ガントチャートビューアーが想定するデータ構造のサンプル。構造の説明は DATA-SCHEMA.md を参照。",
-
+  "$comment": "json-gantt-viewer サンプルデータ (スキーマ v2: 再帰 children 構造。docs/schema.json 準拠)",
   "meta": {
-    "ja": { "title": "ガントチャート ビューアー", "subtitle": "ソフトウェア開発ロードマップ" },
-    "en": { "title": "Gantt Chart Viewer",        "subtitle": "Software delivery roadmap" }
+    "ja": {
+      "title": "ガントチャート ビューアー",
+      "subtitle": "ソフトウェア開発ロードマップ"
+    },
+    "en": {
+      "title": "Gantt Chart Viewer",
+      "subtitle": "Software delivery roadmap"
+    }
   },
-
   "calendar": {
     "$comment": "workweek=稼働曜日(0=日..6=土)。holidays=休業日。extraWorkdays=休日だが稼働する特別日（例: 休日出勤の土曜）。",
-    "workweek": [1, 2, 3, 4, 5],
-    "holidays": [
-      { "date": "2026-07-20", "ja": "海の日", "en": "Marine Day" },
-      { "date": "2026-08-11", "ja": "山の日", "en": "Mountain Day" },
-      { "date": "2026-09-21", "ja": "敬老の日", "en": "Respect for the Aged" },
-      { "date": "2026-09-22", "ja": "国民の休日", "en": "National Holiday" },
-      { "date": "2026-09-23", "ja": "秋分の日", "en": "Autumn Equinox" }
+    "workweek": [
+      1,
+      2,
+      3,
+      4,
+      5
     ],
-    "extraWorkdays": ["2026-08-15"]
+    "holidays": [
+      {
+        "date": "2026-07-20",
+        "ja": "海の日",
+        "en": "Marine Day"
+      },
+      {
+        "date": "2026-08-11",
+        "ja": "山の日",
+        "en": "Mountain Day"
+      },
+      {
+        "date": "2026-09-21",
+        "ja": "敬老の日",
+        "en": "Respect for the Aged"
+      },
+      {
+        "date": "2026-09-22",
+        "ja": "国民の休日",
+        "en": "National Holiday"
+      },
+      {
+        "date": "2026-09-23",
+        "ja": "秋分の日",
+        "en": "Autumn Equinox"
+      }
+    ],
+    "extraWorkdays": [
+      "2026-08-15"
+    ]
   },
-
   "assignees": {
-    "SM": { "ja": "佐藤", "en": "Sato",     "color": "#3b6fd4" },
-    "TN": { "ja": "田中", "en": "Tanaka",   "color": "#2f9e8f" },
-    "YM": { "ja": "山本", "en": "Yamada",   "color": "#6d5bd0" },
-    "KB": { "ja": "小林", "en": "Kobayashi","color": "#4a7cc0" },
-    "IT": { "ja": "伊藤", "en": "Ito",      "color": "#c9902e" },
-    "WD": { "ja": "渡辺", "en": "Watanabe", "color": "#c56b8a" }
+    "SM": {
+      "ja": "佐藤",
+      "en": "Sato",
+      "color": "#3b6fd4"
+    },
+    "TN": {
+      "ja": "田中",
+      "en": "Tanaka",
+      "color": "#2f9e8f"
+    },
+    "YM": {
+      "ja": "山本",
+      "en": "Yamada",
+      "color": "#6d5bd0"
+    },
+    "KB": {
+      "ja": "小林",
+      "en": "Kobayashi",
+      "color": "#4a7cc0"
+    },
+    "IT": {
+      "ja": "伊藤",
+      "en": "Ito",
+      "color": "#c9902e"
+    },
+    "WD": {
+      "ja": "渡辺",
+      "en": "Watanabe",
+      "color": "#c56b8a"
+    }
   },
-
   "projects": [
     {
       "id": "P1",
       "ja": "モバイルアプリ v3.0 リリース",
       "en": "Mobile App v3.0 Release",
       "accent": true,
-
       "milestones": [
-        { "date": "2026-05-22", "ja": "要件確定", "en": "Reqs frozen" },
-        { "date": "2026-09-22", "ja": "v3.0 公開", "en": "v3.0 Launch", "rose": true }
+        {
+          "date": "2026-05-22",
+          "ja": "要件確定",
+          "en": "Reqs frozen"
+        },
+        {
+          "date": "2026-09-22",
+          "ja": "v3.0 公開",
+          "en": "v3.0 Launch",
+          "rose": true
+        }
       ],
-
-      "phases": [
+      "children": [
         {
           "id": "1",
           "ja": "企画・要件定義",
           "en": "Planning & Requirements",
-          "tasks": [
+          "children": [
             {
               "id": "1.1",
               "ja": "市場・競合調査",
               "en": "Market research",
               "who": "TN",
-              "plan":   { "start": "2026-05-04", "end": "2026-05-08" },
-              "actual": { "start": "2026-05-04", "end": "2026-05-08" },
+              "plan": {
+                "start": "2026-05-04",
+                "end": "2026-05-08"
+              },
+              "actual": {
+                "start": "2026-05-04",
+                "end": "2026-05-08"
+              },
               "progress": 1,
               "personDays": 5,
               "critical": false,
-              "deps": []
+              "deps": [],
+              "children": []
             },
             {
               "id": "1.2",
               "ja": "要件定義",
               "en": "Requirements definition",
               "who": "SM",
-              "plan":   { "start": "2026-05-11", "end": "2026-05-20" },
-              "actual": { "start": "2026-05-11", "end": "2026-05-21" },
+              "plan": {
+                "start": "2026-05-11",
+                "end": "2026-05-20"
+              },
+              "actual": {
+                "start": "2026-05-11",
+                "end": "2026-05-21"
+              },
               "progress": 1,
               "personDays": 8,
               "critical": true,
-              "deps": ["1.1"]
+              "deps": [
+                "1.1"
+              ],
+              "children": []
             }
           ]
         },
@@ -76,30 +153,49 @@
           "id": "2",
           "ja": "デザイン",
           "en": "Design",
-          "tasks": [
+          "children": [
             {
               "id": "2.1",
               "ja": "UXワイヤーフレーム",
               "en": "UX wireframes",
               "who": "TN",
-              "plan":   { "start": "2026-05-18", "end": "2026-05-29" },
-              "actual": { "start": "2026-05-19", "end": "2026-05-29" },
+              "plan": {
+                "start": "2026-05-18",
+                "end": "2026-05-29"
+              },
+              "actual": {
+                "start": "2026-05-19",
+                "end": "2026-05-29"
+              },
               "progress": 1,
               "personDays": 9,
               "critical": true,
-              "deps": ["1.2"]
+              "deps": [
+                "1.2"
+              ],
+              "children": []
             },
             {
               "id": "2.2",
               "ja": "UIビジュアルデザイン",
               "en": "UI visual design",
               "who": "TN",
-              "plan":   { "start": "2026-06-01", "end": "2026-06-16" },
-              "actual": { "start": "2026-06-01", "end": "2026-06-17", "$note": "予定より着地が遅延（オーバーラン）" },
+              "plan": {
+                "start": "2026-06-01",
+                "end": "2026-06-16"
+              },
+              "actual": {
+                "start": "2026-06-01",
+                "end": "2026-06-17",
+                "$note": "予定より着地が遅延（オーバーラン）"
+              },
               "progress": 1,
               "personDays": 12,
               "critical": true,
-              "deps": ["2.1"]
+              "deps": [
+                "2.1"
+              ],
+              "children": []
             }
           ]
         },
@@ -107,100 +203,162 @@
           "id": "3",
           "ja": "開発",
           "en": "Development",
-          "tasks": [
+          "children": [
             {
               "id": "3.1",
               "ja": "API設計",
               "en": "API design",
               "who": "KB",
-              "plan":   { "start": "2026-06-15", "end": "2026-06-24" },
-              "actual": { "start": "2026-06-16", "end": "2026-06-25" },
+              "plan": {
+                "start": "2026-06-15",
+                "end": "2026-06-24"
+              },
+              "actual": {
+                "start": "2026-06-16",
+                "end": "2026-06-25"
+              },
               "progress": 1,
               "personDays": 8,
               "critical": true,
-              "deps": ["2.2"]
+              "deps": [
+                "2.2"
+              ],
+              "children": []
             },
             {
               "id": "3.2",
               "ja": "バックエンド実装",
               "en": "Backend build",
               "who": "KB",
-              "plan":   { "start": "2026-06-25", "end": "2026-07-24" },
-              "actual": { "start": "2026-06-26", "end": null, "$note": "着手済み・進行中（end=null）" },
+              "plan": {
+                "start": "2026-06-25",
+                "end": "2026-07-24"
+              },
+              "actual": {
+                "start": "2026-06-26",
+                "end": null,
+                "$note": "着手済み・進行中（end=null）"
+              },
               "progress": 0.55,
               "personDays": 22,
               "critical": true,
-              "deps": ["3.1"]
+              "deps": [
+                "3.1"
+              ],
+              "children": []
             },
             {
               "id": "3.3",
               "ja": "フロントエンド実装",
               "en": "Frontend build",
               "who": "YM",
-              "plan":   { "start": "2026-06-29", "end": "2026-07-31" },
-              "actual": { "start": "2026-07-01", "end": null },
+              "plan": {
+                "start": "2026-06-29",
+                "end": "2026-07-31"
+              },
+              "actual": {
+                "start": "2026-07-01",
+                "end": null
+              },
               "progress": 0.4,
               "personDays": 24,
               "critical": true,
-              "deps": ["2.2"]
+              "deps": [
+                "2.2"
+              ],
+              "children": []
             },
             {
               "id": "3.4",
               "ja": "iOSネイティブ対応",
               "en": "iOS native",
               "who": "WD",
-              "plan":   { "start": "2026-07-06", "end": "2026-08-07" },
-              "actual": { "start": null, "end": null, "$note": "未着手（start=null）" },
+              "plan": {
+                "start": "2026-07-06",
+                "end": "2026-08-07"
+              },
+              "actual": {
+                "start": null,
+                "end": null,
+                "$note": "未着手（start=null）"
+              },
               "progress": 0,
               "personDays": 20,
               "critical": false,
-              "deps": ["3.1"]
+              "deps": [
+                "3.1"
+              ],
+              "children": []
             },
             {
               "id": "3.5",
               "ja": "機能統合",
               "en": "Integration",
               "who": "YM",
-              "plan":   { "start": "2026-08-03", "end": "2026-08-14" },
-              "actual": { "start": null, "end": null },
+              "plan": {
+                "start": "2026-08-03",
+                "end": "2026-08-14"
+              },
+              "actual": {
+                "start": null,
+                "end": null
+              },
               "progress": 0,
               "personDays": 9,
               "critical": true,
-              "deps": ["3.2", "3.3", "3.4"]
+              "deps": [
+                "3.2",
+                "3.3",
+                "3.4"
+              ],
+              "children": []
             }
           ]
         }
       ]
     },
-
     {
       "id": "P2",
       "ja": "Webダッシュボード刷新",
       "en": "Web Dashboard Revamp",
       "accent": false,
-
       "milestones": [
-        { "date": "2026-06-19", "ja": "設計確定", "en": "Design locked" },
-        { "date": "2026-09-04", "ja": "公開", "en": "Go live", "rose": true }
+        {
+          "date": "2026-06-19",
+          "ja": "設計確定",
+          "en": "Design locked"
+        },
+        {
+          "date": "2026-09-04",
+          "ja": "公開",
+          "en": "Go live",
+          "rose": true
+        }
       ],
-
-      "phases": [
+      "children": [
         {
           "id": "w1",
           "ja": "調査",
           "en": "Research",
-          "tasks": [
+          "children": [
             {
               "id": "w1.1",
               "ja": "ユーザーインタビュー",
               "en": "User interviews",
               "who": "TN",
-              "plan":   { "start": "2026-05-25", "end": "2026-06-05" },
-              "actual": { "start": "2026-05-25", "end": "2026-06-05" },
+              "plan": {
+                "start": "2026-05-25",
+                "end": "2026-06-05"
+              },
+              "actual": {
+                "start": "2026-05-25",
+                "end": "2026-06-05"
+              },
               "progress": 1,
               "personDays": 8,
               "critical": false,
-              "deps": []
+              "deps": [],
+              "children": []
             }
           ]
         },
@@ -208,18 +366,27 @@
           "id": "w3",
           "ja": "実装",
           "en": "Build",
-          "tasks": [
+          "children": [
             {
               "id": "w3.1",
               "ja": "コンポーネント基盤",
               "en": "Component base",
               "who": "YM",
-              "plan":   { "start": "2026-06-29", "end": "2026-07-17" },
-              "actual": { "start": "2026-06-30", "end": null },
+              "plan": {
+                "start": "2026-06-29",
+                "end": "2026-07-17"
+              },
+              "actual": {
+                "start": "2026-06-30",
+                "end": null
+              },
               "progress": 0.6,
               "personDays": 14,
               "critical": true,
-              "deps": ["w1.1"]
+              "deps": [
+                "w1.1"
+              ],
+              "children": []
             }
           ]
         }

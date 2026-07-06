@@ -1,120 +1,62 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/chidakiyo/json-gantt-viewer/master/docs/schema.json",
-  "title": "json-gantt-viewer データスキーマ",
-  "description": "ガントチャートビューアーが読み込む JSON の構造。人間可読な解説は docs/DATA-SCHEMA.md を参照。日付はすべて YYYY-MM-DD。",
+  "title": "json-gantt-viewer data (v2)",
+  "description": "ガントチャートビューアーのデータ契約 v2。階層は children による再帰構造（任意の深さ）。v1（phases/tasks）もビューアーは読めるが、生成時は本スキーマ（v2）に従うこと。",
   "type": "object",
   "required": [
     "projects"
   ],
-  "properties": {
-    "$schema": {
+  "additionalProperties": false,
+  "patternProperties": {
+    "^\\$": {
       "type": "string"
-    },
-    "$comment": {
-      "type": "string"
-    },
-    "meta": {
-      "$ref": "#/$defs/meta"
-    },
-    "calendar": {
-      "$ref": "#/$defs/calendar"
-    },
-    "assignees": {
-      "type": "object",
-      "description": "担当コード → 担当者。タスクの who がこのキーを参照する。",
-      "additionalProperties": {
-        "$ref": "#/$defs/assignee"
-      }
-    },
-    "projects": {
-      "type": "array",
-      "description": "プロジェクトの一覧。上から縦に並ぶ。",
-      "items": {
-        "$ref": "#/$defs/project"
-      }
     }
   },
-  "additionalProperties": false,
-  "$defs": {
-    "date": {
-      "type": "string",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-      "description": "YYYY-MM-DD 形式の日付。"
-    },
-    "localized": {
-      "type": "object",
-      "description": "日英の表示ラベル。片方だけ運用する場合は同じ値でも可。",
-      "properties": {
-        "ja": {
-          "type": "string"
-        },
-        "en": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "patternProperties": {
-        "^\\$": {}
-      }
-    },
+  "properties": {
     "meta": {
       "type": "object",
-      "description": "左上のタイトル／サブタイトル（日英）。省略時は既定の文言。",
+      "additionalProperties": false,
       "properties": {
         "ja": {
-          "$ref": "#/$defs/metaLabel"
+          "$ref": "#/$defs/metaLang"
         },
         "en": {
-          "$ref": "#/$defs/metaLabel"
+          "$ref": "#/$defs/metaLang"
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
-        "^\\$": {}
-      }
-    },
-    "metaLabel": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "subtitle": {
+        "^\\$": {
           "type": "string"
         }
-      },
-      "additionalProperties": false,
-      "patternProperties": {
-        "^\\$": {}
       }
     },
     "calendar": {
       "type": "object",
-      "description": "稼働日カレンダー。省略時は月〜金稼働・祝日なし。",
+      "additionalProperties": false,
       "properties": {
         "workweek": {
           "type": "array",
-          "description": "稼働する曜日（0=日 … 6=土）。既定 [1,2,3,4,5]。",
           "items": {
             "type": "integer",
             "minimum": 0,
             "maximum": 6
-          }
+          },
+          "description": "稼働する曜日 (0=日 … 6=土)。既定 [1,2,3,4,5]"
         },
         "holidays": {
           "type": "array",
-          "description": "休業日。オブジェクトまたは日付文字列。",
           "items": {
             "oneOf": [
               {
-                "$ref": "#/$defs/date"
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               {
                 "type": "object",
                 "required": [
                   "date"
                 ],
+                "additionalProperties": false,
                 "properties": {
                   "date": {
                     "$ref": "#/$defs/date"
@@ -124,14 +66,12 @@
                   },
                   "en": {
                     "type": "string"
-                  },
-                  "label": {
-                    "type": "string"
                   }
                 },
-                "additionalProperties": false,
                 "patternProperties": {
-                  "^\\$": {}
+                  "^\\$": {
+                    "type": "string"
+                  }
                 }
               }
             ]
@@ -139,78 +79,85 @@
         },
         "extraWorkdays": {
           "type": "array",
-          "description": "本来は休みだが稼働する日（休日出勤の土曜など）。",
           "items": {
             "$ref": "#/$defs/date"
-          }
+          },
+          "description": "本来休みだが稼働する日"
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
-        "^\\$": {}
+        "^\\$": {
+          "type": "string"
+        }
       }
     },
-    "assignee": {
+    "assignees": {
       "type": "object",
-      "description": "担当者。color / abbr は省略時に自動生成。",
-      "properties": {
-        "ja": {
-          "type": "string"
+      "description": "担当者マスタ。キー=担当コード（タスクの who が参照）",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ja": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{3,8}$"
+          },
+          "abbr": {
+            "type": "string",
+            "maxLength": 4
+          }
         },
-        "en": {
-          "type": "string"
-        },
-        "color": {
-          "type": "string",
-          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
-          "description": "アバターの色（hex）。省略可。"
-        },
-        "abbr": {
-          "type": "string",
-          "description": "アバターに出す文字。省略可。"
+        "patternProperties": {
+          "^\\$": {
+            "type": "string"
+          }
         }
-      },
-      "additionalProperties": false,
-      "patternProperties": {
-        "^\\$": {}
       }
     },
-    "project": {
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    }
+  },
+  "$defs": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "dateOrNull": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metaLang": {
       "type": "object",
-      "required": [
-        "id",
-        "phases"
-      ],
+      "additionalProperties": false,
       "properties": {
-        "id": {
+        "title": {
           "type": "string"
         },
-        "ja": {
+        "subtitle": {
           "type": "string"
-        },
-        "en": {
-          "type": "string"
-        },
-        "accent": {
-          "type": "boolean",
-          "description": "true で主役プロジェクトとして淡いアクセント背景。既定 false。"
-        },
-        "milestones": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/milestone"
-          }
-        },
-        "phases": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/phase"
-          }
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
-        "^\\$": {}
+        "^\\$": {
+          "type": "string"
+        }
       }
     },
     "milestone": {
@@ -218,6 +165,7 @@
       "required": [
         "date"
       ],
+      "additionalProperties": false,
       "properties": {
         "date": {
           "$ref": "#/$defs/date"
@@ -230,20 +178,22 @@
         },
         "rose": {
           "type": "boolean",
-          "description": "true で重要マイルストーンを赤系で強調。既定 false。"
+          "description": "true で重要マイルストーンとして赤系強調"
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
-        "^\\$": {}
+        "^\\$": {
+          "type": "string"
+        }
       }
     },
-    "phase": {
+    "project": {
       "type": "object",
       "required": [
         "id",
-        "tasks"
+        "children"
       ],
+      "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string"
@@ -254,27 +204,39 @@
         "en": {
           "type": "string"
         },
-        "tasks": {
+        "accent": {
+          "type": "boolean"
+        },
+        "milestones": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/task"
+            "$ref": "#/$defs/milestone"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
           }
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
-        "^\\$": {}
+        "^\\$": {
+          "type": "string"
+        }
       }
     },
-    "task": {
+    "node": {
       "type": "object",
+      "description": "children が非空ならグループ（バー・工数・進捗は配下から自動集計。plan 等は持たせない）。children が空/省略ならタスク（plan 必須）。",
       "required": [
-        "id",
-        "plan"
+        "id"
       ],
+      "additionalProperties": false,
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "全体で一意。deps から参照される"
         },
         "ja": {
           "type": "string"
@@ -284,91 +246,102 @@
         },
         "who": {
           "type": "string",
-          "description": "assignees のキー。省略可。"
+          "description": "assignees のキー。未定義の文字列も可（色は自動割当）"
         },
         "plan": {
           "type": "object",
-          "description": "予定期間。",
-          "required": [
-            "start",
-            "end"
-          ],
+          "additionalProperties": false,
           "properties": {
             "start": {
-              "$ref": "#/$defs/date"
+              "$ref": "#/$defs/dateOrNull"
             },
             "end": {
-              "$ref": "#/$defs/date"
+              "$ref": "#/$defs/dateOrNull"
             }
           },
-          "additionalProperties": false,
           "patternProperties": {
-            "^\\$": {}
+            "^\\$": {
+              "type": "string"
+            }
           }
         },
         "actual": {
           "type": "object",
-          "description": "実績期間。未着手は start=null、進行中は end=null。",
+          "additionalProperties": false,
           "properties": {
             "start": {
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/date"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/dateOrNull",
+              "description": "null=未着手"
             },
             "end": {
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/date"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "$note": {
-              "type": "string"
+              "$ref": "#/$defs/dateOrNull",
+              "description": "null=進行中"
             }
           },
-          "additionalProperties": false,
           "patternProperties": {
-            "^\\$": {}
+            "^\\$": {
+              "type": "string"
+            }
           }
         },
         "progress": {
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "進捗率 0〜1。既定 0。"
+          "description": "0〜1 の小数。※ 1 を超える値はビューアー側で %表記とみなし /100 に自動補正されるが、生成時は必ず 0〜1 で出力すること"
         },
         "personDays": {
           "type": "number",
-          "minimum": 0,
-          "description": "工数（人日）。既定 0。"
+          "minimum": 0
         },
         "critical": {
-          "type": "boolean",
-          "description": "クリティカルパス上なら true。既定 false。"
+          "type": "boolean"
         },
         "deps": {
           "type": "array",
-          "description": "先行タスクの id 配列。",
           "items": {
             "type": "string"
           }
+        },
+        "note": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
         }
       },
-      "additionalProperties": false,
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "required": [
+                "children"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "children": {
+                "maxItems": 0
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "id",
+          "plan"
+        ]
+      },
       "patternProperties": {
-        "^\\$": {}
+        "^\\$": {
+          "type": "string"
+        }
       }
     }
-  },
-  "patternProperties": {
-    "^\\$": {}
   }
 }

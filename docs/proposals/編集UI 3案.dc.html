@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e7ebf1; }
+  body { font-family: 'Inter','Noto Sans JP',system-ui,sans-serif; -webkit-font-smoothing: antialiased; }
+</style>
+</helmet>
+
+<section style="padding:28px; display:flex; flex-direction:column; gap:20px">
+  <div style="max-width:980px">
+    <div style="font-size:20px; font-weight:700; color:#232b39">ハイブリッド案 — <a href="#1a" style="color:#3b6fd4">1a</a> スプレッドシート + <a href="#1c" style="color:#3b6fd4">1c</a> 補助パネル</div>
+    <div style="font-size:13px; color:#6a7383; margin-top:6px; line-height:1.6">セル=高頻度の値(名前・担当・日付・進捗・工数)、パネル=構造とメタ情報(備考・依存・クリティカル・階層操作)。行の <b>No. をクリック</b>(または Enter)でパネルが開閉し、閉じればフル幅に戻る。</div>
+  </div>
+
+  <div id="2a" style="display:flex; flex-direction:column; gap:10px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <a href="#2a" style="text-decoration:none; background:#3b6fd4; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px">2a</a>
+      <div style="font-size:15px; font-weight:700; color:#232b39">スプレッドシート + 詳細パネル(2.1 を選択中の状態)</div>
+    </div>
+    <div style="width:1240px; background:#f3f5f8; border:1px solid #dde2ea; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(20,28,44,.08)">
+
+      <!-- toolbar -->
+      <div style="background:#fff; border-bottom:1px solid #dde2ea; padding:10px 14px; display:flex; align-items:center; gap:12px">
+        <div style="display:inline-flex; background:#f3f5f8; border:1px solid #dde2ea; border-radius:8px; padding:3px; gap:2px">
+          <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; color:#6a7383">閲覧</span>
+          <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; background:#3b6fd4; color:#fff; box-shadow:0 1px 2px rgba(20,28,44,.15)">編集</span>
+        </div>
+        <div style="width:1px; height:24px; background:#dde2ea"></div>
+        <span style="display:inline-flex; align-items:center; gap:7px; background:#3b6fd4; color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:8px">保存 <span style="width:7px; height:7px; border-radius:50%; background:#ffd66e"></span></span>
+        <span style="display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#6a7383">自動保存 <span style="width:30px; height:17px; border-radius:9px; background:#dde2ea; position:relative; display:inline-block"><span style="position:absolute; left:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2)"></span></span></span>
+        <div style="display:inline-flex; gap:4px">
+          <span style="border:1px solid #dde2ea; background:#fff; color:#6a7383; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↶</span>
+          <span style="border:1px solid #dde2ea; background:#fff; color:#c6cdd8; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↷</span>
+        </div>
+        <div style="flex:1"></div>
+        <span style="border:1px solid #dde2ea; background:#fff; color:#3b6fd4; font-size:12px; font-weight:600; padding:6px 11px; border-radius:7px">＋ タスク</span>
+        <span style="border:1px solid #dde2ea; background:#fff; color:#3b6fd4; font-size:12px; font-weight:600; padding:6px 11px; border-radius:7px">＋ マイルストーン</span>
+      </div>
+
+      <div style="display:flex">
+        <!-- spreadsheet -->
+        <div style="flex:1; min-width:0">
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#fff; border-bottom:2px solid #dde2ea; font-size:11px; font-weight:700; color:#98a1b0">
+            <div style="padding:8px 10px">No. / 行操作</div><div style="padding:8px 10px">作業項目</div><div style="padding:8px 4px; text-align:center">担当</div><div style="padding:8px 4px; text-align:right">工数</div><div style="padding:8px 8px">進捗</div><div style="padding:8px 4px; text-align:center">予定開始</div><div style="padding:8px 4px; text-align:center">予定終了</div><div style="padding:8px 4px; text-align:center">実績開始</div><div style="padding:8px 4px; text-align:center">実績終了</div>
+          </div>
+
+          <!-- group 1 -->
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#e4ebf6; border-bottom:1px solid #dde2ea; align-items:center; font-size:12.5px; height:38px">
+            <div style="padding:0 10px; display:flex; align-items:center; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#232b39; width:18px; font-size:11px">1</span>
+              <span style="border:1px solid #c6cdd8; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↑</span>
+              <span style="border:1px solid #c6cdd8; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↓</span>
+              <span style="border:1px solid #c6cdd8; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#d24d45">×</span>
+            </div>
+            <div style="padding:0 10px; display:flex; align-items:center; gap:6px">
+              <span style="color:#6a7383; font-size:10px">▼</span>
+              <span style="border:1px solid #c6cdd8; background:#fff; border-radius:6px; padding:3px 8px; font-weight:700; color:#232b39; flex:1">設計</span>
+              <span style="border:1px solid #c6cdd8; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#3b6fd4">＋</span>
+            </div>
+            <div style="text-align:center; color:#98a1b0">—</div>
+            <div style="text-align:right; padding:0 6px; color:#6a7383; font-family:'JetBrains Mono',monospace">2</div>
+            <div style="padding:0 8px; color:#6a7383; font-family:'JetBrains Mono',monospace">100%</div>
+            <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/15</div>
+            <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/23</div>
+            <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/15</div>
+            <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/24</div>
+          </div>
+
+          <!-- 1.1 -->
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px">
+            <div style="padding:0 10px; display:flex; align-items:center; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:18px; font-size:11px">1.1</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↑</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↓</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#d24d45">×</span>
+            </div>
+            <div style="padding:0 10px 0 26px; display:flex; align-items:center; gap:6px">
+              <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 8px; color:#232b39; flex:1">要件定義</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 0; text-align:center; font-size:11.5px">ぴぐお</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 5px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+            <div style="padding:0 6px; display:flex; align-items:center; gap:4px">
+              <span style="border:1px solid #dde2ea; border-radius:6px; padding:3px 5px; font-family:'JetBrains Mono',monospace; width:42px; text-align:right">100</span><span style="color:#98a1b0; font-size:11px">%</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-15</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-18</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-15</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-18</span></div>
+          </div>
+
+          <!-- 2.1 selected -->
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#eef4fe; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; box-shadow:inset 3px 0 0 #3b6fd4">
+            <div style="padding:0 10px; display:flex; align-items:center; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; color:#fff; background:#3b6fd4; width:26px; text-align:center; font-size:11px; border-radius:5px; padding:2px 0; font-weight:600">2.1</span>
+              <span style="border:1px solid #b9cdf0; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↑</span>
+              <span style="border:1px solid #b9cdf0; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↓</span>
+              <span style="border:1px solid #b9cdf0; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#d24d45">×</span>
+            </div>
+            <div style="padding:0 10px 0 26px; display:flex; align-items:center; gap:6px">
+              <span style="border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 8px; color:#232b39; flex:1; font-weight:600">API実装</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 0; text-align:center; font-size:11.5px">佐藤</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 5px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+            <div style="padding:0 6px; display:flex; align-items:center; gap:4px">
+              <span style="border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 5px; font-family:'JetBrains Mono',monospace; width:42px; text-align:right">70</span><span style="color:#98a1b0; font-size:11px">%</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-22</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-30</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-22</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #b9cdf0; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#98a1b0">MM-DD</span></div>
+          </div>
+
+          <!-- 2.2 dirty -->
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#fdfaf0; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; position:relative">
+            <div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:#c9902e"></div>
+            <div style="padding:0 10px; display:flex; align-items:center; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:18px; font-size:11px">2.2</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↑</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↓</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#d24d45">×</span>
+            </div>
+            <div style="padding:0 10px 0 26px; display:flex; align-items:center; gap:6px">
+              <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 8px; color:#232b39; flex:1">画面実装</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 0; text-align:center; font-size:11.5px">田中</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 5px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+            <div style="padding:0 6px; display:flex; align-items:center; gap:4px">
+              <span style="border:2px solid #3b6fd4; background:#fff; border-radius:6px; padding:2px 5px; font-family:'JetBrains Mono',monospace; width:42px; text-align:right; box-shadow:0 0 0 3px rgba(59,111,212,.15)">60</span><span style="color:#98a1b0; font-size:11px">%</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-24</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">07-03</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-25</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#98a1b0">MM-DD</span></div>
+          </div>
+
+          <!-- 2.3.1.1 depth -->
+          <div style="display:grid; grid-template-columns:104px 252px 60px 50px 92px 80px 80px 80px 80px; background:#fff; align-items:center; font-size:12.5px; height:38px">
+            <div style="padding:0 10px; display:flex; align-items:center; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:18px; font-size:9px">2.3.1.1</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↑</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#6a7383">↓</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:19px; height:19px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#d24d45">×</span>
+            </div>
+            <div style="padding:0 10px 0 58px; display:flex; align-items:center; gap:6px">
+              <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:3px 8px; color:#232b39; flex:1">テスト環境構築</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 0; text-align:center; font-size:11.5px">佐藤</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 5px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+            <div style="padding:0 6px; display:flex; align-items:center; gap:4px">
+              <span style="border:1px solid #dde2ea; border-radius:6px; padding:3px 5px; font-family:'JetBrains Mono',monospace; width:42px; text-align:right">50</span><span style="color:#98a1b0; font-size:11px">%</span>
+            </div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-23</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-26</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px">06-24</span></div>
+            <div style="padding:0 3px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:3px 2px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#98a1b0">MM-DD</span></div>
+          </div>
+
+          <div style="background:#fff; border-top:1px dashed #c6cdd8; padding:8px 14px; font-size:12px; color:#3b6fd4; font-weight:600">＋ 行を追加</div>
+        </div>
+
+        <!-- detail panel (structure & meta only) -->
+        <div style="width:296px; flex:0 0 auto; background:#fff; border-left:1px solid #dde2ea; padding:13px 15px; display:flex; flex-direction:column; gap:11px">
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#fff; background:#3b6fd4; border-radius:5px; padding:2px 7px; font-weight:600">2.1</span>
+            <span style="font-size:13.5px; font-weight:700; color:#232b39; flex:1">API実装</span>
+            <span style="color:#98a1b0; font-size:14px; cursor:pointer" title="パネルを閉じる">✕</span>
+          </div>
+          <div style="display:flex; gap:5px">
+            <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 8px; font-size:11px; font-weight:600; color:#6a7383">⇤ 階層上げ</span>
+            <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 8px; font-size:11px; font-weight:600; color:#6a7383">階層下げ ⇥</span>
+            <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 8px; font-size:11px; font-weight:600; color:#3b6fd4">＋ 子タスク</span>
+          </div>
+          <div style="height:1px; background:#edf0f4"></div>
+          <div><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:5px">依存関係(先行タスク)</div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px">
+              <span style="display:inline-flex; align-items:center; gap:5px; background:#eef4fe; border:1px solid #b9cdf0; border-radius:6px; padding:3px 8px; font-size:11.5px; color:#232b39"><span style="font-family:'JetBrains Mono',monospace; color:#3b6fd4; font-weight:600">1.2</span> 基本設計 <span style="color:#98a1b0">✕</span></span>
+              <span style="border:1px dashed #c6cdd8; border-radius:6px; padding:3px 9px; font-size:11.5px; color:#3b6fd4; font-weight:600">＋ 追加</span>
+            </div></div>
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:12px; font-weight:600; color:#232b39">クリティカルパス</span>
+            <span style="width:30px; height:17px; border-radius:9px; background:#d24d45; position:relative; display:inline-block"><span style="position:absolute; right:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2)"></span></span>
+          </div>
+          <div><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:5px">備考</div>
+            <span style="display:block; border:1px solid #dde2ea; border-radius:7px; padding:7px 9px; font-size:12px; color:#232b39; min-height:56px; line-height:1.5">外部APIのレート制限が判明。設計を一部見直し中。</span></div>
+          <div style="height:1px; background:#edf0f4"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-size:11px; color:#d24d45; font-weight:600">タスクを削除</span>
+            <span style="font-size:10.5px; color:#98a1b0">Enter でも開閉</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="width:1240px; font-size:12px; color:#6a7383; line-height:1.7; padding:0 4px">セルの役割は <a href="#1a" style="color:#3b6fd4">1a</a> と同一(常時入力欄・連続入力)。パネルには<b style="color:#232b39">列にない項目だけ</b>を置く: 依存関係・クリティカル・備考長文・階層操作。選択行は No. バッジが青に。パネルを閉じるとテーブルがフル幅に広がる。</div>
+  </div>
+</section>
+
+<section style="padding:28px; display:flex; flex-direction:column; gap:20px">
+  <div style="max-width:980px">
+    <div style="font-size:20px; font-weight:700; color:#232b39">編集モードUI 3案 — ガントチャートビューアー</div>
+    <div style="font-size:13px; color:#6a7383; margin-top:6px; line-height:1.6">閲覧モードは現状のまま。ツールバーの [閲覧|編集] トグルで全体が切り替わる前提で、<b>編集モード時のテーブル操作系</b>だけが3案で異なります。ツールバー(保存・自動保存・Undo/Redo)と、ガント直接操作(バーのドラッグ移動・伸縮・行入れ替え)は全案共通です。</div>
+  </div>
+
+  <div style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap">
+
+    <!-- ============ 1a: spreadsheet ============ -->
+    <div id="1a" style="display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <a href="#1a" style="text-decoration:none; background:#3b6fd4; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px">1a</a>
+        <div style="font-size:15px; font-weight:700; color:#232b39">スプレッドシート型</div>
+        <div style="font-size:12px; color:#6a7383">全セルが常時入力欄。一括入力が最速、画面は賑やか</div>
+      </div>
+      <div style="width:1010px; background:#f3f5f8; border:1px solid #dde2ea; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(20,28,44,.08)">
+
+        <!-- toolbar -->
+        <div style="background:#fff; border-bottom:1px solid #dde2ea; padding:10px 14px; display:flex; align-items:center; gap:12px">
+          <div style="display:inline-flex; background:#f3f5f8; border:1px solid #dde2ea; border-radius:8px; padding:3px; gap:2px">
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; color:#6a7383">閲覧</span>
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; background:#3b6fd4; color:#fff; box-shadow:0 1px 2px rgba(20,28,44,.15)">編集</span>
+          </div>
+          <div style="width:1px; height:24px; background:#dde2ea"></div>
+          <span style="display:inline-flex; align-items:center; gap:7px; background:#3b6fd4; color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:8px">保存 <span style="width:7px; height:7px; border-radius:50%; background:#ffd66e"></span></span>
+          <span style="display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#6a7383">自動保存 <span style="width:30px; height:17px; border-radius:9px; background:#dde2ea; position:relative; display:inline-block"><span style="position:absolute; left:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2)"></span></span></span>
+          <div style="display:inline-flex; gap:4px">
+            <span style="border:1px solid #dde2ea; background:#fff; color:#6a7383; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↶</span>
+            <span style="border:1px solid #dde2ea; background:#fff; color:#c6cdd8; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↷</span>
+          </div>
+          <div style="flex:1"></div>
+          <span style="border:1px solid #dde2ea; background:#fff; color:#3b6fd4; font-size:12px; font-weight:600; padding:6px 11px; border-radius:7px">＋ タスク</span>
+          <span style="border:1px solid #dde2ea; background:#fff; color:#3b6fd4; font-size:12px; font-weight:600; padding:6px 11px; border-radius:7px">＋ マイルストーン</span>
+        </div>
+
+        <!-- table header -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#fff; border-bottom:2px solid #dde2ea; font-size:11px; font-weight:700; color:#98a1b0">
+          <div style="padding:8px 10px">No. / 行操作</div><div style="padding:8px 10px">作業項目</div><div style="padding:8px 6px; text-align:center">担当</div><div style="padding:8px 6px; text-align:right">工数</div><div style="padding:8px 10px">進捗</div><div style="padding:8px 6px; text-align:center">予定開始</div><div style="padding:8px 6px; text-align:center">予定終了</div><div style="padding:8px 6px; text-align:center">実績開始</div><div style="padding:8px 6px; text-align:center">実績終了</div>
+        </div>
+
+        <!-- group row 1 -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#e4ebf6; border-bottom:1px solid #dde2ea; align-items:center; font-size:12.5px">
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:4px">
+            <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#232b39; width:20px">1</span>
+            <span style="border:1px solid #c6cdd8; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↑</span>
+            <span style="border:1px solid #c6cdd8; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↓</span>
+            <span style="border:1px solid #c6cdd8; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+          </div>
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:6px">
+            <span style="color:#6a7383; font-size:10px">▼</span>
+            <span style="border:1px solid #c6cdd8; background:#fff; border-radius:6px; padding:4px 8px; font-weight:700; color:#232b39; flex:1">設計</span>
+            <span style="border:1px solid #c6cdd8; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4" title="子タスク追加">＋</span>
+          </div>
+          <div style="text-align:center; color:#98a1b0">—</div>
+          <div style="text-align:right; padding:0 6px; color:#6a7383; font-family:'JetBrains Mono',monospace">2</div>
+          <div style="padding:0 10px; color:#6a7383; font-family:'JetBrains Mono',monospace">100%</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/15</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/23</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/15</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/24</div>
+        </div>
+
+        <!-- task 1.1 -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px">
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:4px">
+            <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:20px; font-size:11px">1.1</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↑</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↓</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+          </div>
+          <div style="padding:5px 10px 5px 28px; display:flex; align-items:center; gap:6px">
+            <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 8px; color:#232b39; flex:1">要件定義</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4">＋</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 0; text-align:center; color:#232b39; font-size:12px">ぴぐお</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 6px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+          <div style="padding:0 8px; display:flex; align-items:center; gap:5px">
+            <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 5px; font-family:'JetBrains Mono',monospace; width:44px; text-align:right; color:#232b39">100</span><span style="color:#98a1b0; font-size:11px">%</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-15</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-18</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-15</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-18</span></div>
+        </div>
+
+        <!-- task 1.2 (edited: dirty) -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#fdfaf0; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; position:relative">
+          <div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:#c9902e"></div>
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:4px">
+            <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:20px; font-size:11px">1.2</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↑</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↓</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+          </div>
+          <div style="padding:5px 10px 5px 28px; display:flex; align-items:center; gap:6px">
+            <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 8px; color:#232b39; flex:1">基本設計</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4">＋</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 0; text-align:center; font-size:12px">ぴぐお</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 6px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+          <div style="padding:0 8px; display:flex; align-items:center; gap:5px">
+            <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 5px; font-family:'JetBrains Mono',monospace; width:44px; text-align:right">100</span><span style="color:#98a1b0; font-size:11px">%</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-17</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:2px solid #3b6fd4; background:#fff; border-radius:6px; padding:3px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; box-shadow:0 0 0 3px rgba(59,111,212,.15)">06-23</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-17</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #c9902e; background:#fff; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#c9902e; font-weight:600">06-24</span></div>
+        </div>
+
+        <!-- group 2.3 (depth demo) -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#eef2f9; border-bottom:1px solid #dde2ea; align-items:center; font-size:12.5px">
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:4px">
+            <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; width:20px; font-size:11px">2.3</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↑</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↓</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+          </div>
+          <div style="padding:5px 10px 5px 28px; display:flex; align-items:center; gap:6px">
+            <span style="color:#6a7383; font-size:10px">▼</span>
+            <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 8px; font-weight:600; color:#232b39; flex:1">結合テスト</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4">＋</span>
+          </div>
+          <div style="text-align:center; color:#98a1b0">—</div>
+          <div style="text-align:right; padding:0 6px; color:#6a7383; font-family:'JetBrains Mono',monospace">2</div>
+          <div style="padding:0 10px; color:#6a7383; font-family:'JetBrains Mono',monospace">25%</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/23</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">7/9</div>
+          <div style="text-align:center; color:#6a7383; font-family:'JetBrains Mono',monospace">6/24</div>
+          <div style="text-align:center; color:#98a1b0">—</div>
+        </div>
+
+        <!-- task 2.3.1.1 depth-4 -->
+        <div style="display:grid; grid-template-columns:110px 300px 64px 56px 104px 88px 88px 88px 88px; background:#fff; align-items:center; font-size:12.5px">
+          <div style="padding:5px 10px; display:flex; align-items:center; gap:4px">
+            <span style="font-family:'JetBrains Mono',monospace; color:#6a7383; font-size:10px; width:20px">2.3.1.1</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↑</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#6a7383">↓</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+          </div>
+          <div style="padding:5px 10px 5px 64px; display:flex; align-items:center; gap:6px">
+            <span style="border:1px solid #dde2ea; background:#fff; border-radius:6px; padding:4px 8px; color:#232b39; flex:1">テスト環境構築</span>
+            <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4">＋</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 0; text-align:center; font-size:12px">佐藤</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 6px; text-align:right; font-family:'JetBrains Mono',monospace">1</span></div>
+          <div style="padding:0 8px; display:flex; align-items:center; gap:5px">
+            <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 5px; font-family:'JetBrains Mono',monospace; width:44px; text-align:right">50</span><span style="color:#98a1b0; font-size:11px">%</span>
+          </div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-23</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-26</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">06-24</span></div>
+          <div style="padding:0 4px"><span style="display:block; border:1px solid #dde2ea; border-radius:6px; padding:4px 4px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#98a1b0">MM-DD</span></div>
+        </div>
+
+        <div style="background:#fff; border-top:1px dashed #c6cdd8; padding:8px 14px; font-size:12px; color:#3b6fd4; font-weight:600">＋ 行を追加</div>
+      </div>
+      <div style="width:1010px; font-size:12px; color:#6a7383; line-height:1.7; padding:0 4px"><b style="color:#232b39">向き:</b> まとめて計画を打ち込む・大量修正する運用。<b style="color:#232b39">弱み:</b> 常時入力欄で視認性が落ち、閲覧モードとの見た目差が大きい。黄色行=未保存の変更(左端バー+背景)。</div>
+    </div>
+
+    <!-- ============ 1b: quiet inline ============ -->
+    <div id="1b" style="display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <a href="#1b" style="text-decoration:none; background:#3b6fd4; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px">1b</a>
+        <div style="font-size:15px; font-weight:700; color:#232b39">静かなインライン型</div>
+        <div style="font-size:12px; color:#6a7383">見た目は閲覧時とほぼ同じ。クリックしたセルだけ入力欄になる</div>
+      </div>
+      <div style="width:1010px; background:#f3f5f8; border:1px solid #dde2ea; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(20,28,44,.08)">
+
+        <!-- toolbar (same) -->
+        <div style="background:#fff; border-bottom:1px solid #dde2ea; padding:10px 14px; display:flex; align-items:center; gap:12px">
+          <div style="display:inline-flex; background:#f3f5f8; border:1px solid #dde2ea; border-radius:8px; padding:3px; gap:2px">
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; color:#6a7383">閲覧</span>
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; background:#3b6fd4; color:#fff; box-shadow:0 1px 2px rgba(20,28,44,.15)">編集</span>
+          </div>
+          <div style="width:1px; height:24px; background:#dde2ea"></div>
+          <span style="display:inline-flex; align-items:center; gap:7px; background:#3b6fd4; color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:8px">保存 <span style="width:7px; height:7px; border-radius:50%; background:#ffd66e"></span></span>
+          <span style="display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#6a7383">自動保存 <span style="width:30px; height:17px; border-radius:9px; background:#dde2ea; position:relative; display:inline-block"><span style="position:absolute; left:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2)"></span></span></span>
+          <div style="display:inline-flex; gap:4px">
+            <span style="border:1px solid #dde2ea; background:#fff; color:#6a7383; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↶</span>
+            <span style="border:1px solid #dde2ea; background:#fff; color:#c6cdd8; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↷</span>
+          </div>
+          <div style="flex:1"></div>
+          <span style="font-size:11.5px; color:#98a1b0">Tab / Shift+Tab で階層変更 ・ ⋮⋮ ドラッグで並べ替え</span>
+        </div>
+
+        <!-- header -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#fff; border-bottom:2px solid #dde2ea; font-size:11px; font-weight:700; color:#98a1b0">
+          <div style="padding:8px 8px"></div><div style="padding:8px 10px">作業項目</div><div style="padding:8px 6px; text-align:center">担当</div><div style="padding:8px 6px; text-align:right">工数</div><div style="padding:8px 10px">進捗</div><div style="padding:8px 6px; text-align:center">予定</div><div style="padding:8px 6px; text-align:center">実績</div><div style="padding:8px 10px">備考</div>
+        </div>
+
+        <!-- group -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#e4ebf6; border-bottom:1px solid #dde2ea; align-items:center; font-size:12.5px; height:38px">
+          <div style="text-align:center; color:#c6cdd8; font-size:13px; letter-spacing:-1px">⋮⋮</div>
+          <div style="padding:0 10px; font-weight:700; color:#232b39"><span style="color:#6a7383; font-size:10px; margin-right:6px">▼</span>1&nbsp;&nbsp;設計</div>
+          <div style="text-align:center; color:#98a1b0">—</div>
+          <div style="text-align:right; padding:0 8px; font-family:'JetBrains Mono',monospace; color:#6a7383">2</div>
+          <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; color:#6a7383">100%</div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; color:#6a7383; font-size:11.5px">6/15–6/23</div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; color:#6a7383; font-size:11.5px">6/15–6/24</div>
+          <div></div>
+        </div>
+
+        <!-- normal row (looks like view mode) -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px">
+          <div></div>
+          <div style="padding:0 10px 0 30px; color:#232b39">1.1&nbsp;&nbsp;要件定義</div>
+          <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#2f9e8f; color:#fff; font-size:10px; font-weight:700">ぴ</span></div>
+          <div style="text-align:right; padding:0 8px; font-family:'JetBrains Mono',monospace">1</div>
+          <div style="padding:0 10px; display:flex; align-items:center; gap:7px"><span style="flex:1; height:5px; border-radius:3px; background:#eef1f6; position:relative"><span style="position:absolute; left:0; top:0; bottom:0; width:100%; border-radius:3px; background:#9aa4b4"></span></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">100%</span></div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/15–6/18</div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/15–6/18</div>
+          <div style="padding:0 10px; color:#98a1b0; font-size:11.5px"></div>
+        </div>
+
+        <!-- hovered row -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#f4f8fe; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; position:relative">
+          <div style="text-align:center; color:#6a7383; font-size:13px; letter-spacing:-1px; cursor:grab">⋮⋮</div>
+          <div style="padding:0 10px 0 30px; color:#232b39; display:flex; align-items:center; gap:8px">1.2&nbsp;&nbsp;基本設計
+            <span style="margin-left:auto; display:inline-flex; gap:3px">
+              <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#3b6fd4">＋</span>
+              <span style="border:1px solid #dde2ea; background:#fff; width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#d24d45">×</span>
+            </span>
+          </div>
+          <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#2f9e8f; color:#fff; font-size:10px; font-weight:700">ぴ</span></div>
+          <div style="text-align:right; padding:0 8px; font-family:'JetBrains Mono',monospace">1</div>
+          <div style="padding:0 10px; display:flex; align-items:center; gap:7px"><span style="flex:1; height:5px; border-radius:3px; background:#eef1f6; position:relative"><span style="position:absolute; left:0; top:0; bottom:0; width:100%; border-radius:3px; background:#9aa4b4"></span></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">100%</span></div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/17–6/23</div>
+          <!-- editing cell -->
+          <div style="display:flex; justify-content:center"><span style="border:2px solid #3b6fd4; background:#fff; border-radius:6px; padding:2px 5px; font-family:'JetBrains Mono',monospace; font-size:11.5px; box-shadow:0 0 0 3px rgba(59,111,212,.15)">6/17–<b>6/24</b></span></div>
+          <div style="padding:0 10px; color:#98a1b0; font-size:11.5px">レビュー指摘で…</div>
+        </div>
+
+        <!-- dirty row -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; position:relative">
+          <div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:#c9902e"></div>
+          <div></div>
+          <div style="padding:0 10px 0 30px; color:#232b39">2.1&nbsp;&nbsp;API実装</div>
+          <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#3b6fd4; color:#fff; font-size:10px; font-weight:700">佐</span></div>
+          <div style="text-align:right; padding:0 8px; font-family:'JetBrains Mono',monospace">1</div>
+          <div style="padding:0 10px; display:flex; align-items:center; gap:7px"><span style="flex:1; height:5px; border-radius:3px; background:#eef1f6; position:relative"><span style="position:absolute; left:0; top:0; bottom:0; width:70%; border-radius:3px; background:#3b6fd4"></span></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#c9902e; font-weight:600">70%</span></div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/22–6/30</div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/22–</div>
+          <div style="padding:0 10px; color:#98a1b0; font-size:11.5px"></div>
+        </div>
+
+        <!-- depth-4 row -->
+        <div style="display:grid; grid-template-columns:44px 340px 64px 56px 110px 100px 100px 100px; background:#fff; align-items:center; font-size:12.5px; height:38px">
+          <div></div>
+          <div style="padding:0 10px 0 66px; color:#232b39">2.3.1.1&nbsp;&nbsp;テスト環境構築</div>
+          <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#3b6fd4; color:#fff; font-size:10px; font-weight:700">佐</span></div>
+          <div style="text-align:right; padding:0 8px; font-family:'JetBrains Mono',monospace">1</div>
+          <div style="padding:0 10px; display:flex; align-items:center; gap:7px"><span style="flex:1; height:5px; border-radius:3px; background:#eef1f6; position:relative"><span style="position:absolute; left:0; top:0; bottom:0; width:50%; border-radius:3px; background:#3b6fd4"></span></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">50%</span></div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/23–6/26</div>
+          <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#232b39">6/24–</div>
+          <div style="padding:0 10px; color:#98a1b0; font-size:11.5px">遅延(+1)</div>
+        </div>
+
+        <div style="background:#fff; border-top:1px dashed #c6cdd8; padding:8px 14px; font-size:12px; color:#3b6fd4; font-weight:600">＋ 行を追加</div>
+      </div>
+      <div style="width:1010px; font-size:12px; color:#6a7383; line-height:1.7; padding:0 4px"><b style="color:#232b39">向き:</b> 閲覧の綺麗さを保ったまま随時直す運用。閲覧⇄編集の切替に違和感がない。<b style="color:#232b39">弱み:</b> どこが編集できるか一見して分かりにくい(ホバーで発見)。ホバー行=青、編集中セル=フォーカスリング、変更済み行=左端の琥珀バー。</div>
+    </div>
+
+    <!-- ============ 1c: detail panel ============ -->
+    <div id="1c" style="display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <a href="#1c" style="text-decoration:none; background:#3b6fd4; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px">1c</a>
+        <div style="font-size:15px; font-weight:700; color:#232b39">行選択 + 詳細パネル型</div>
+        <div style="font-size:12px; color:#6a7383">テーブルは閲覧のまま。行を選ぶと右に編集パネルが開く</div>
+      </div>
+      <div style="width:1010px; background:#f3f5f8; border:1px solid #dde2ea; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(20,28,44,.08)">
+
+        <!-- toolbar (same) -->
+        <div style="background:#fff; border-bottom:1px solid #dde2ea; padding:10px 14px; display:flex; align-items:center; gap:12px">
+          <div style="display:inline-flex; background:#f3f5f8; border:1px solid #dde2ea; border-radius:8px; padding:3px; gap:2px">
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; color:#6a7383">閲覧</span>
+            <span style="padding:5px 13px; border-radius:6px; font-size:12px; font-weight:600; background:#3b6fd4; color:#fff; box-shadow:0 1px 2px rgba(20,28,44,.15)">編集</span>
+          </div>
+          <div style="width:1px; height:24px; background:#dde2ea"></div>
+          <span style="display:inline-flex; align-items:center; gap:7px; background:#3b6fd4; color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:8px">保存 <span style="width:7px; height:7px; border-radius:50%; background:#ffd66e"></span></span>
+          <span style="display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#6a7383">自動保存 <span style="width:30px; height:17px; border-radius:9px; background:#dde2ea; position:relative; display:inline-block"><span style="position:absolute; left:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2)"></span></span></span>
+          <div style="display:inline-flex; gap:4px">
+            <span style="border:1px solid #dde2ea; background:#fff; color:#6a7383; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↶</span>
+            <span style="border:1px solid #dde2ea; background:#fff; color:#c6cdd8; width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:14px">↷</span>
+          </div>
+          <div style="flex:1"></div>
+          <span style="border:1px solid #dde2ea; background:#fff; color:#3b6fd4; font-size:12px; font-weight:600; padding:6px 11px; border-radius:7px">＋ タスク</span>
+        </div>
+
+        <div style="display:flex">
+          <!-- table -->
+          <div style="flex:1; min-width:0">
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#fff; border-bottom:2px solid #dde2ea; font-size:11px; font-weight:700; color:#98a1b0">
+              <div style="padding:8px 12px">作業項目</div><div style="padding:8px 6px; text-align:center">担当</div><div style="padding:8px 10px">進捗</div><div style="padding:8px 6px; text-align:center">予定</div><div style="padding:8px 6px; text-align:center">実績</div>
+            </div>
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#e4ebf6; border-bottom:1px solid #dde2ea; align-items:center; font-size:12.5px; height:38px">
+              <div style="padding:0 12px; font-weight:700; color:#232b39"><span style="color:#6a7383; font-size:10px; margin-right:6px">▼</span>1&nbsp;&nbsp;設計</div>
+              <div style="text-align:center; color:#98a1b0">—</div>
+              <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; color:#6a7383">100%</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; color:#6a7383; font-size:11.5px">6/15–6/23</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; color:#6a7383; font-size:11.5px">6/15–6/24</div>
+            </div>
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px">
+              <div style="padding:0 12px 0 32px; color:#232b39">1.1&nbsp;&nbsp;要件定義</div>
+              <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#2f9e8f; color:#fff; font-size:10px; font-weight:700">ぴ</span></div>
+              <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">100%</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/15–6/18</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/15–6/18</div>
+            </div>
+            <!-- selected row -->
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#eef4fe; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; box-shadow:inset 3px 0 0 #3b6fd4">
+              <div style="padding:0 12px 0 32px; color:#232b39; font-weight:600">2.1&nbsp;&nbsp;API実装</div>
+              <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#3b6fd4; color:#fff; font-size:10px; font-weight:700">佐</span></div>
+              <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#232b39">70%</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/22–6/30</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/22–</div>
+            </div>
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#fff; border-bottom:1px solid #edf0f4; align-items:center; font-size:12.5px; height:38px; position:relative">
+              <div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:#c9902e"></div>
+              <div style="padding:0 12px 0 32px; color:#232b39">2.2&nbsp;&nbsp;画面実装</div>
+              <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#6d5bd0; color:#fff; font-size:10px; font-weight:700">田</span></div>
+              <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">50%</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/24–7/3</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/25–</div>
+            </div>
+            <div style="display:grid; grid-template-columns:270px 56px 100px 110px 110px; background:#fff; align-items:center; font-size:12.5px; height:38px">
+              <div style="padding:0 12px 0 68px; color:#232b39">2.3.1.1&nbsp;&nbsp;テスト環境構築</div>
+              <div style="text-align:center"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#3b6fd4; color:#fff; font-size:10px; font-weight:700">佐</span></div>
+              <div style="padding:0 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#6a7383">50%</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/23–6/26</div>
+              <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px">6/24–</div>
+            </div>
+          </div>
+
+          <!-- detail panel -->
+          <div style="width:300px; flex:0 0 auto; background:#fff; border-left:1px solid #dde2ea; padding:14px 16px; display:flex; flex-direction:column; gap:11px">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#98a1b0">2.1</span>
+              <span style="font-size:13.5px; font-weight:700; color:#232b39; flex:1">API実装</span>
+              <span style="border:1px solid #dde2ea; width:22px; height:22px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#6a7383">↑</span>
+              <span style="border:1px solid #dde2ea; width:22px; height:22px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#6a7383">↓</span>
+            </div>
+            <div style="display:flex; gap:5px">
+              <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 9px; font-size:11px; font-weight:600; color:#6a7383">⇤ 階層上げ</span>
+              <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 9px; font-size:11px; font-weight:600; color:#6a7383">階層下げ ⇥</span>
+              <span style="border:1px solid #dde2ea; border-radius:6px; padding:4px 9px; font-size:11px; font-weight:600; color:#3b6fd4">＋ 子</span>
+            </div>
+            <div style="height:1px; background:#edf0f4"></div>
+            <div><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">タスク名</div>
+              <span style="display:block; border:1px solid #dde2ea; border-radius:7px; padding:6px 9px; font-size:12.5px; color:#232b39">API実装</span></div>
+            <div style="display:flex; gap:8px">
+              <div style="flex:1"><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">担当</div>
+                <span style="display:flex; align-items:center; justify-content:space-between; border:1px solid #dde2ea; border-radius:7px; padding:6px 9px; font-size:12.5px">佐藤 <span style="color:#98a1b0; font-size:10px">▾</span></span></div>
+              <div style="width:80px"><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">工数(人日)</div>
+                <span style="display:block; border:1px solid #dde2ea; border-radius:7px; padding:6px 9px; font-size:12.5px; font-family:'JetBrains Mono',monospace; text-align:right">1</span></div>
+            </div>
+            <div style="display:flex; gap:8px">
+              <div style="flex:1"><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">予定 開始 – 終了</div>
+                <span style="display:flex; gap:5px"><span style="flex:1; border:1px solid #dde2ea; border-radius:7px; padding:6px 7px; font-size:11.5px; font-family:'JetBrains Mono',monospace; text-align:center">06-22</span><span style="flex:1; border:1px solid #dde2ea; border-radius:7px; padding:6px 7px; font-size:11.5px; font-family:'JetBrains Mono',monospace; text-align:center">06-30</span></span></div>
+            </div>
+            <div style="display:flex; gap:8px">
+              <div style="flex:1"><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">実績 開始 – 終了</div>
+                <span style="display:flex; gap:5px"><span style="flex:1; border:1px solid #dde2ea; border-radius:7px; padding:6px 7px; font-size:11.5px; font-family:'JetBrains Mono',monospace; text-align:center">06-22</span><span style="flex:1; border:1px solid #dde2ea; border-radius:7px; padding:6px 7px; font-size:11.5px; font-family:'JetBrains Mono',monospace; text-align:center; color:#98a1b0">—</span></span></div>
+            </div>
+            <div><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">進捗 <span style="font-family:'JetBrains Mono',monospace; color:#3b6fd4">70%</span></div>
+              <div style="display:flex; align-items:center; gap:9px">
+                <span style="flex:1; height:5px; border-radius:3px; background:#eef1f6; position:relative"><span style="position:absolute; left:0; top:0; bottom:0; width:70%; border-radius:3px; background:#3b6fd4"></span><span style="position:absolute; left:calc(70% - 7px); top:-4.5px; width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #3b6fd4; box-shadow:0 1px 3px rgba(20,28,44,.25)"></span></span>
+                <span style="border:1px solid #dde2ea; border-radius:6px; padding:3px 6px; font-size:11.5px; font-family:'JetBrains Mono',monospace; width:46px; text-align:right">70</span>
+              </div></div>
+            <div><div style="font-size:10.5px; font-weight:700; color:#98a1b0; margin-bottom:4px">備考</div>
+              <span style="display:block; border:1px solid #dde2ea; border-radius:7px; padding:6px 9px; font-size:12px; color:#98a1b0; min-height:40px"></span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px">
+              <span style="font-size:11px; color:#d24d45; font-weight:600">タスクを削除</span>
+              <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#6a7383">クリティカル <span style="width:14px; height:14px; border:1.5px solid #c6cdd8; border-radius:4px; display:inline-block"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="width:1010px; font-size:12px; color:#6a7383; line-height:1.7; padding:0 4px"><b style="color:#232b39">向き:</b> テーブルの視認性を完全に維持。備考・依存・クリティカル等、列に出ていない項目も編集できる。<b style="color:#232b39">弱み:</b> 1項目直すのに 選択→パネル と2ステップ。連続入力はやや遅い。</div>
+    </div>
+
+    <!-- ============ common: gantt direct ops ============ -->
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <span style="background:#6a7383; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px">共通</span>
+        <div style="font-size:15px; font-weight:700; color:#232b39">ガント直接操作(全案共通)</div>
+      </div>
+      <div style="width:1010px; background:#fff; border:1px solid #dde2ea; border-radius:12px; padding:18px 22px; display:flex; flex-direction:column; gap:16px; box-shadow:0 2px 8px rgba(20,28,44,.08)">
+        <div style="display:flex; align-items:center; gap:18px">
+          <div style="width:120px; font-size:12px; font-weight:700; color:#232b39">バー移動</div>
+          <div style="flex:1; height:34px; background:#f8fafc; border-radius:7px; position:relative; overflow:hidden">
+            <div style="position:absolute; left:110px; top:8px; width:180px; height:18px; border-radius:5px; background:#3b6fd4; opacity:.35"></div>
+            <div style="position:absolute; left:170px; top:8px; width:180px; height:18px; border-radius:5px; background:#3b6fd4; box-shadow:0 2px 8px rgba(59,111,212,.4); cursor:grabbing"></div>
+            <div style="position:absolute; left:364px; top:9px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#3b6fd4; font-weight:600">+3日 → 6/25–7/3</div>
+          </div>
+          <div style="width:300px; font-size:11.5px; color:#6a7383">バー本体をドラッグ = 予定期間を平行移動。日付スナップ、ツールチップで移動量を常時表示</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:18px">
+          <div style="width:120px; font-size:12px; font-weight:700; color:#232b39">期間伸縮</div>
+          <div style="flex:1; height:34px; background:#f8fafc; border-radius:7px; position:relative; overflow:hidden">
+            <div style="position:absolute; left:170px; top:8px; width:230px; height:18px; border-radius:5px; background:#3b6fd4"></div>
+            <div style="position:absolute; left:394px; top:5px; width:8px; height:24px; border-radius:3px; background:#fff; border:2px solid #3b6fd4; cursor:ew-resize"></div>
+          </div>
+          <div style="width:300px; font-size:11.5px; color:#6a7383">バー端に出るハンドルをドラッグ = 開始/終了日だけ変更</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:18px">
+          <div style="width:120px; font-size:12px; font-weight:700; color:#232b39">行入れ替え</div>
+          <div style="flex:1; height:56px; background:#f8fafc; border-radius:7px; position:relative; overflow:hidden">
+            <div style="position:absolute; left:12px; right:12px; top:6px; height:20px; border-radius:5px; background:#fff; border:1px solid #dde2ea; display:flex; align-items:center; padding:0 10px; font-size:11px; color:#6a7383"><span style="letter-spacing:-1px; margin-right:8px; color:#c6cdd8">⋮⋮</span> 2.1 API実装</div>
+            <div style="position:absolute; left:12px; right:12px; top:31px; height:2px; border-radius:1px; background:#3b6fd4"></div>
+            <div style="position:absolute; left:22px; right:2px; top:36px; height:20px; border-radius:5px; background:#fff; border:1px solid #3b6fd4; box-shadow:0 4px 14px rgba(20,28,44,.18); display:flex; align-items:center; padding:0 10px; font-size:11px; color:#232b39; transform:rotate(.4deg)"><span style="letter-spacing:-1px; margin-right:8px; color:#3b6fd4">⋮⋮</span> 2.2 画面実装</div>
+          </div>
+          <div style="width:300px; font-size:11.5px; color:#6a7383">行を縦ドラッグ = 並べ替え。左右ドロップ位置で階層(インデント)も変更。Tab/Shift+Tab でも可</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

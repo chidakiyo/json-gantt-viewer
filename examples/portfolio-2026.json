@@ -1,0 +1,1772 @@
+{
+  "meta": {
+    "ja": {
+      "title": "全社ITポートフォリオ 2026",
+      "subtitle": "基幹刷新・モバイル・データ基盤・セキュリティ"
+    },
+    "en": {
+      "title": "IT Portfolio 2026",
+      "subtitle": "Core renewal / Mobile / Data platform / Security"
+    }
+  },
+  "calendar": {
+    "workweek": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "ja": "元日",
+        "en": "New Year's Day"
+      },
+      {
+        "date": "2026-01-12",
+        "ja": "成人の日",
+        "en": "Coming of Age Day"
+      },
+      {
+        "date": "2026-02-11",
+        "ja": "建国記念の日",
+        "en": "National Foundation Day"
+      },
+      {
+        "date": "2026-02-23",
+        "ja": "天皇誕生日",
+        "en": "Emperor's Birthday"
+      },
+      {
+        "date": "2026-03-20",
+        "ja": "春分の日",
+        "en": "Vernal Equinox"
+      },
+      {
+        "date": "2026-04-29",
+        "ja": "昭和の日",
+        "en": "Showa Day"
+      },
+      {
+        "date": "2026-05-04",
+        "ja": "みどりの日",
+        "en": "Greenery Day"
+      },
+      {
+        "date": "2026-05-05",
+        "ja": "こどもの日",
+        "en": "Children's Day"
+      },
+      {
+        "date": "2026-05-06",
+        "ja": "振替休日",
+        "en": "Substitute Holiday"
+      },
+      {
+        "date": "2026-07-20",
+        "ja": "海の日",
+        "en": "Marine Day"
+      },
+      {
+        "date": "2026-08-11",
+        "ja": "山の日",
+        "en": "Mountain Day"
+      },
+      {
+        "date": "2026-09-21",
+        "ja": "敬老の日",
+        "en": "Respect for the Aged Day"
+      },
+      {
+        "date": "2026-09-22",
+        "ja": "国民の休日",
+        "en": "National Holiday"
+      },
+      {
+        "date": "2026-09-23",
+        "ja": "秋分の日",
+        "en": "Autumn Equinox"
+      },
+      {
+        "date": "2026-10-12",
+        "ja": "スポーツの日",
+        "en": "Sports Day"
+      },
+      {
+        "date": "2026-11-03",
+        "ja": "文化の日",
+        "en": "Culture Day"
+      },
+      {
+        "date": "2026-11-23",
+        "ja": "勤労感謝の日",
+        "en": "Labor Thanksgiving"
+      },
+      {
+        "date": "2026-12-29",
+        "ja": "年末休業",
+        "en": "Year-end closure"
+      },
+      {
+        "date": "2026-12-30",
+        "ja": "年末休業",
+        "en": "Year-end closure"
+      },
+      {
+        "date": "2026-12-31",
+        "ja": "大晦日",
+        "en": "New Year's Eve"
+      }
+    ],
+    "extraWorkdays": [
+      "2026-12-12"
+    ]
+  },
+  "assignees": {
+    "SA": {
+      "ja": "佐藤",
+      "en": "Sato"
+    },
+    "TK": {
+      "ja": "田中",
+      "en": "Tanaka"
+    },
+    "YM": {
+      "ja": "山本",
+      "en": "Yamamoto"
+    },
+    "KB": {
+      "ja": "小林",
+      "en": "Kobayashi"
+    },
+    "IT": {
+      "ja": "伊藤",
+      "en": "Ito"
+    },
+    "WT": {
+      "ja": "渡辺",
+      "en": "Watanabe"
+    },
+    "NK": {
+      "ja": "中村",
+      "en": "Nakamura"
+    },
+    "KT": {
+      "ja": "加藤",
+      "en": "Kato"
+    },
+    "YS": {
+      "ja": "吉田",
+      "en": "Yoshida"
+    },
+    "HS": {
+      "ja": "林",
+      "en": "Hayashi"
+    },
+    "MT": {
+      "ja": "松本",
+      "en": "Matsumoto"
+    },
+    "IN": {
+      "ja": "井上",
+      "en": "Inoue"
+    },
+    "ACME": {
+      "ja": "アクメ社",
+      "en": "ACME Corp."
+    },
+    "BPO": {
+      "ja": "委託先BPO",
+      "en": "BPO Vendor"
+    }
+  },
+  "projects": [
+    {
+      "id": "P1",
+      "ja": "基幹システム刷新",
+      "en": "Core system renewal",
+      "accent": true,
+      "milestones": [
+        {
+          "date": "2026-02-27",
+          "ja": "要件確定",
+          "en": "Reqs frozen"
+        },
+        {
+          "date": "2026-05-29",
+          "ja": "設計完了",
+          "en": "Design complete"
+        },
+        {
+          "date": "2026-10-30",
+          "ja": "UAT開始",
+          "en": "UAT start"
+        },
+        {
+          "date": "2026-12-14",
+          "ja": "本番稼働",
+          "en": "Go live",
+          "rose": true
+        }
+      ],
+      "children": [
+        {
+          "id": "req",
+          "ja": "要件定義",
+          "en": "Requirements",
+          "children": [
+            {
+              "id": "req.1",
+              "ja": "現行業務ヒアリング",
+              "en": "As-is interviews",
+              "who": "SA",
+              "plan": {
+                "start": "2026-01-13",
+                "end": "2026-01-16"
+              },
+              "personDays": 4,
+              "deps": [],
+              "critical": true,
+              "actual": {
+                "start": "2026-01-13",
+                "end": "2026-01-20"
+              },
+              "progress": 1
+            },
+            {
+              "id": "req.2",
+              "ja": "業務フロー整理",
+              "en": "Business flow mapping",
+              "who": "NK",
+              "plan": {
+                "start": "2026-01-19",
+                "end": "2026-01-23"
+              },
+              "personDays": 5,
+              "deps": [
+                "req.1"
+              ],
+              "critical": true,
+              "actual": {
+                "start": "2026-01-19",
+                "end": "2026-01-23"
+              },
+              "progress": 1
+            },
+            {
+              "id": "req.3",
+              "ja": "要求一覧化",
+              "en": "Requirements inventory",
+              "who": "SA",
+              "plan": {
+                "start": "2026-01-26",
+                "end": "2026-02-04"
+              },
+              "personDays": 8,
+              "deps": [
+                "req.2"
+              ],
+              "critical": true,
+              "actual": {
+                "start": "2026-01-26",
+                "end": "2026-02-05"
+              },
+              "progress": 1
+            },
+            {
+              "id": "req.4",
+              "ja": "要件定義書作成",
+              "en": "Requirements spec",
+              "who": "SA",
+              "plan": {
+                "start": "2026-02-05",
+                "end": "2026-02-10"
+              },
+              "personDays": 4,
+              "deps": [
+                "req.3"
+              ],
+              "critical": true,
+              "actual": {
+                "start": "2026-02-06",
+                "end": "2026-02-10"
+              },
+              "progress": 1
+            },
+            {
+              "id": "req.5",
+              "ja": "要件レビュー・承認",
+              "en": "Review & sign-off",
+              "who": "NK",
+              "plan": {
+                "start": "2026-02-12",
+                "end": "2026-02-17"
+              },
+              "personDays": 4,
+              "deps": [
+                "req.4"
+              ],
+              "critical": true,
+              "actual": {
+                "start": "2026-02-12",
+                "end": "2026-02-17"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "des",
+          "ja": "設計",
+          "en": "Design",
+          "children": [
+            {
+              "id": "des.b",
+              "ja": "基本設計",
+              "en": "Basic design",
+              "children": [
+                {
+                  "id": "bd.1",
+                  "ja": "アーキテクチャ設計",
+                  "en": "Architecture design",
+                  "who": "KB",
+                  "plan": {
+                    "start": "2026-03-02",
+                    "end": "2026-03-12"
+                  },
+                  "personDays": 9,
+                  "deps": [
+                    "req.5"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-03-02",
+                    "end": "2026-03-12"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "bd.2",
+                  "ja": "DB論理設計",
+                  "en": "Logical DB design",
+                  "who": "YM",
+                  "plan": {
+                    "start": "2026-03-13",
+                    "end": "2026-03-24"
+                  },
+                  "personDays": 7,
+                  "deps": [
+                    "bd.1"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-03-13",
+                    "end": "2026-03-24"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "bd.3",
+                  "ja": "画面基本設計",
+                  "en": "Screen basic design",
+                  "who": "KB",
+                  "plan": {
+                    "start": "2026-03-25",
+                    "end": "2026-04-02"
+                  },
+                  "personDays": 7,
+                  "deps": [
+                    "bd.2"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-03-25",
+                    "end": "2026-04-02"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "bd.4",
+                  "ja": "外部IF基本設計",
+                  "en": "External IF design",
+                  "who": "YM",
+                  "plan": {
+                    "start": "2026-04-03",
+                    "end": "2026-04-09"
+                  },
+                  "personDays": 5,
+                  "deps": [
+                    "bd.3"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-04-03",
+                    "end": "2026-04-10"
+                  },
+                  "progress": 1
+                }
+              ]
+            },
+            {
+              "id": "des.d",
+              "ja": "詳細設計",
+              "en": "Detail design",
+              "children": [
+                {
+                  "id": "dd.1",
+                  "ja": "DB物理設計",
+                  "en": "Physical DB design",
+                  "who": "KB",
+                  "plan": {
+                    "start": "2026-04-10",
+                    "end": "2026-04-20"
+                  },
+                  "personDays": 7,
+                  "deps": [
+                    "bd.4"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-04-10",
+                    "end": "2026-04-22"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dd.2",
+                  "ja": "画面詳細設計",
+                  "en": "Screen detail design",
+                  "who": "IT",
+                  "plan": {
+                    "start": "2026-04-21",
+                    "end": "2026-04-27"
+                  },
+                  "personDays": 5,
+                  "deps": [
+                    "dd.1"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-04-21",
+                    "end": "2026-04-27"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dd.3",
+                  "ja": "バッチ詳細設計",
+                  "en": "Batch detail design",
+                  "who": "HS",
+                  "plan": {
+                    "start": "2026-04-28",
+                    "end": "2026-05-12"
+                  },
+                  "personDays": 7,
+                  "deps": [
+                    "dd.2"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-04-28",
+                    "end": "2026-05-12"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dd.4",
+                  "ja": "帳票設計",
+                  "en": "Report design",
+                  "who": "HS",
+                  "plan": {
+                    "start": "2026-05-13",
+                    "end": "2026-05-19"
+                  },
+                  "personDays": 5,
+                  "deps": [
+                    "dd.3"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-05-13",
+                    "end": "2026-05-19"
+                  },
+                  "progress": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "dev",
+          "ja": "開発",
+          "en": "Development",
+          "children": [
+            {
+              "id": "dev.t1",
+              "ja": "会計チーム",
+              "en": "Accounting team",
+              "children": [
+                {
+                  "id": "dev1.1",
+                  "ja": "会計: 実装",
+                  "en": "Implementation",
+                  "who": "KB",
+                  "plan": {
+                    "start": "2026-05-20",
+                    "end": "2026-06-01"
+                  },
+                  "personDays": 9,
+                  "deps": [
+                    "dd.4"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-05-20",
+                    "end": "2026-06-01"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev1.2",
+                  "ja": "会計: 単体テスト",
+                  "en": "Unit test",
+                  "who": "BPO",
+                  "plan": {
+                    "start": "2026-06-02",
+                    "end": "2026-06-22"
+                  },
+                  "personDays": 15,
+                  "deps": [
+                    "dev1.1"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-06-02",
+                    "end": "2026-06-22"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev1.3",
+                  "ja": "会計: コードレビュー対応",
+                  "en": "Review fixes",
+                  "who": "BPO",
+                  "plan": {
+                    "start": "2026-06-23",
+                    "end": "2026-07-07"
+                  },
+                  "personDays": 11,
+                  "deps": [
+                    "dev1.2"
+                  ],
+                  "critical": true,
+                  "actual": {
+                    "start": "2026-06-23",
+                    "end": null
+                  },
+                  "progress": 0.77
+                }
+              ]
+            },
+            {
+              "id": "dev.t2",
+              "ja": "販売チーム",
+              "en": "Sales team",
+              "children": [
+                {
+                  "id": "dev2.1",
+                  "ja": "販売: 実装",
+                  "en": "Implementation",
+                  "who": "BPO",
+                  "plan": {
+                    "start": "2026-05-20",
+                    "end": "2026-06-01"
+                  },
+                  "personDays": 9,
+                  "deps": [
+                    "dd.4"
+                  ],
+                  "actual": {
+                    "start": "2026-05-21",
+                    "end": "2026-06-03"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev2.2",
+                  "ja": "販売: 単体テスト",
+                  "en": "Unit test",
+                  "who": "IT",
+                  "plan": {
+                    "start": "2026-06-02",
+                    "end": "2026-06-16"
+                  },
+                  "personDays": 11,
+                  "deps": [
+                    "dev2.1"
+                  ],
+                  "actual": {
+                    "start": "2026-06-02",
+                    "end": "2026-06-17"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev2.3",
+                  "ja": "販売: コードレビュー対応",
+                  "en": "Review fixes",
+                  "who": "BPO",
+                  "plan": {
+                    "start": "2026-06-17",
+                    "end": "2026-07-01"
+                  },
+                  "personDays": 11,
+                  "deps": [
+                    "dev2.2"
+                  ],
+                  "actual": {
+                    "start": "2026-06-17",
+                    "end": "2026-07-01"
+                  },
+                  "progress": 1
+                }
+              ]
+            },
+            {
+              "id": "dev.t3",
+              "ja": "在庫チーム",
+              "en": "Inventory team",
+              "children": [
+                {
+                  "id": "dev3.1",
+                  "ja": "在庫: 実装",
+                  "en": "Implementation",
+                  "who": "YS",
+                  "plan": {
+                    "start": "2026-05-20",
+                    "end": "2026-05-29"
+                  },
+                  "personDays": 8,
+                  "deps": [
+                    "dd.4"
+                  ],
+                  "actual": {
+                    "start": "2026-05-20",
+                    "end": "2026-05-29"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev3.2",
+                  "ja": "在庫: 単体テスト",
+                  "en": "Unit test",
+                  "who": "IN",
+                  "plan": {
+                    "start": "2026-06-01",
+                    "end": "2026-06-18"
+                  },
+                  "personDays": 14,
+                  "deps": [
+                    "dev3.1"
+                  ],
+                  "actual": {
+                    "start": "2026-06-02",
+                    "end": "2026-06-18"
+                  },
+                  "progress": 1
+                },
+                {
+                  "id": "dev3.3",
+                  "ja": "在庫: コードレビュー対応",
+                  "en": "Review fixes",
+                  "who": "YS",
+                  "plan": {
+                    "start": "2026-06-19",
+                    "end": "2026-07-07"
+                  },
+                  "personDays": 13,
+                  "deps": [
+                    "dev3.2"
+                  ],
+                  "actual": {
+                    "start": "2026-06-19",
+                    "end": null
+                  },
+                  "progress": 0.92
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tst",
+          "ja": "テスト",
+          "en": "Testing",
+          "children": [
+            {
+              "id": "tst.1",
+              "ja": "結合テスト",
+              "en": "Integration test",
+              "who": "WT",
+              "plan": {
+                "start": "2026-07-15",
+                "end": "2026-07-29"
+              },
+              "personDays": 10,
+              "deps": [
+                "dev1.3",
+                "dev2.3",
+                "dev3.3"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "tst.2",
+              "ja": "総合テスト",
+              "en": "System test",
+              "who": "TK",
+              "plan": {
+                "start": "2026-07-30",
+                "end": "2026-08-13"
+              },
+              "personDays": 10,
+              "deps": [
+                "tst.1"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "tst.3",
+              "ja": "性能テスト",
+              "en": "Performance test",
+              "who": "TK",
+              "plan": {
+                "start": "2026-08-14",
+                "end": "2026-08-26"
+              },
+              "personDays": 9,
+              "deps": [
+                "tst.2"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "tst.4",
+              "ja": "UAT支援",
+              "en": "UAT support",
+              "who": "WT",
+              "plan": {
+                "start": "2026-08-27",
+                "end": "2026-09-07"
+              },
+              "personDays": 8,
+              "deps": [
+                "tst.3"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            }
+          ]
+        },
+        {
+          "id": "rel",
+          "ja": "移行・リリース",
+          "en": "Cutover & release",
+          "children": [
+            {
+              "id": "rel.1",
+              "ja": "データ移行リハーサル",
+              "en": "Migration rehearsal",
+              "who": "NK",
+              "plan": {
+                "start": "2026-09-04",
+                "end": "2026-09-10"
+              },
+              "personDays": 5,
+              "deps": [
+                "tst.4"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "rel.2",
+              "ja": "運用手順整備",
+              "en": "Runbook",
+              "who": "NK",
+              "plan": {
+                "start": "2026-09-11",
+                "end": "2026-09-18"
+              },
+              "personDays": 6,
+              "deps": [
+                "rel.1"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "rel.3",
+              "ja": "本番移行",
+              "en": "Cutover",
+              "who": "WT",
+              "plan": {
+                "start": "2026-09-24",
+                "end": "2026-10-01"
+              },
+              "personDays": 6,
+              "deps": [
+                "rel.2"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "rel.4",
+              "ja": "ハイパーケア",
+              "en": "Hypercare",
+              "who": "SA",
+              "plan": {
+                "start": "2026-10-02",
+                "end": "2026-10-07"
+              },
+              "personDays": 4,
+              "deps": [
+                "rel.3"
+              ],
+              "critical": true,
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "ja": "モバイルアプリ v4",
+      "en": "Mobile app v4",
+      "accent": false,
+      "milestones": [
+        {
+          "date": "2026-06-12",
+          "ja": "β版",
+          "en": "Beta"
+        },
+        {
+          "date": "2026-08-21",
+          "ja": "v4.0 公開",
+          "en": "v4.0 launch",
+          "rose": true
+        }
+      ],
+      "children": [
+        {
+          "id": "sp1",
+          "ja": "スプリント1",
+          "en": "Sprint 1",
+          "children": [
+            {
+              "id": "sp1.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "YM",
+              "plan": {
+                "start": "2026-03-30",
+                "end": "2026-04-03"
+              },
+              "personDays": 5,
+              "deps": [],
+              "actual": {
+                "start": "2026-03-30",
+                "end": "2026-04-03"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp1.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "MT",
+              "plan": {
+                "start": "2026-04-06",
+                "end": "2026-04-08"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp1.1"
+              ],
+              "actual": {
+                "start": "2026-04-06",
+                "end": "2026-04-10"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp1.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "YS",
+              "plan": {
+                "start": "2026-04-09",
+                "end": "2026-04-10"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp1.2"
+              ],
+              "actual": {
+                "start": "2026-04-09",
+                "end": "2026-04-13"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp2",
+          "ja": "スプリント2",
+          "en": "Sprint 2",
+          "children": [
+            {
+              "id": "sp2.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "IN",
+              "plan": {
+                "start": "2026-04-13",
+                "end": "2026-04-17"
+              },
+              "personDays": 5,
+              "deps": [
+                "sp1.3"
+              ],
+              "actual": {
+                "start": "2026-04-13",
+                "end": "2026-04-20"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp2.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "YM",
+              "plan": {
+                "start": "2026-04-20",
+                "end": "2026-04-21"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp2.1"
+              ],
+              "actual": {
+                "start": "2026-04-20",
+                "end": "2026-04-23"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp2.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "IN",
+              "plan": {
+                "start": "2026-04-22",
+                "end": "2026-04-27"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp2.2"
+              ],
+              "actual": {
+                "start": "2026-04-22",
+                "end": "2026-04-27"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp3",
+          "ja": "スプリント3",
+          "en": "Sprint 3",
+          "children": [
+            {
+              "id": "sp3.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "YM",
+              "plan": {
+                "start": "2026-04-27",
+                "end": "2026-05-07"
+              },
+              "personDays": 5,
+              "deps": [
+                "sp2.3"
+              ],
+              "actual": {
+                "start": "2026-04-27",
+                "end": "2026-05-11"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp3.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "MT",
+              "plan": {
+                "start": "2026-05-08",
+                "end": "2026-05-13"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp3.1"
+              ],
+              "actual": {
+                "start": "2026-05-08",
+                "end": "2026-05-14"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp3.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "MT",
+              "plan": {
+                "start": "2026-05-14",
+                "end": "2026-05-19"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp3.2"
+              ],
+              "actual": {
+                "start": "2026-05-14",
+                "end": "2026-05-19"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp4",
+          "ja": "スプリント4",
+          "en": "Sprint 4",
+          "children": [
+            {
+              "id": "sp4.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "YM",
+              "plan": {
+                "start": "2026-05-15",
+                "end": "2026-05-19"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp3.3"
+              ],
+              "actual": {
+                "start": "2026-05-15",
+                "end": "2026-05-20"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp4.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "YM",
+              "plan": {
+                "start": "2026-05-20",
+                "end": "2026-05-21"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp4.1"
+              ],
+              "actual": {
+                "start": "2026-05-20",
+                "end": "2026-05-21"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp4.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "MT",
+              "plan": {
+                "start": "2026-05-22",
+                "end": "2026-05-27"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp4.2"
+              ],
+              "actual": {
+                "start": "2026-05-25",
+                "end": "2026-05-27"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp5",
+          "ja": "スプリント5",
+          "en": "Sprint 5",
+          "children": [
+            {
+              "id": "sp5.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "YM",
+              "plan": {
+                "start": "2026-05-29",
+                "end": "2026-06-01"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp4.3"
+              ],
+              "actual": {
+                "start": "2026-05-29",
+                "end": "2026-06-03"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp5.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "MT",
+              "plan": {
+                "start": "2026-06-02",
+                "end": "2026-06-03"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp5.1"
+              ],
+              "actual": {
+                "start": "2026-06-02",
+                "end": "2026-06-03"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp5.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "IN",
+              "plan": {
+                "start": "2026-06-04",
+                "end": "2026-06-08"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp5.2"
+              ],
+              "actual": {
+                "start": "2026-06-04",
+                "end": "2026-06-09"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp6",
+          "ja": "スプリント6",
+          "en": "Sprint 6",
+          "children": [
+            {
+              "id": "sp6.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "MT",
+              "plan": {
+                "start": "2026-06-12",
+                "end": "2026-06-18"
+              },
+              "personDays": 5,
+              "deps": [
+                "sp5.3"
+              ],
+              "actual": {
+                "start": "2026-06-12",
+                "end": "2026-06-19"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp6.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "IN",
+              "plan": {
+                "start": "2026-06-19",
+                "end": "2026-06-23"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp6.1"
+              ],
+              "actual": {
+                "start": "2026-06-19",
+                "end": "2026-06-24"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp6.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "YS",
+              "plan": {
+                "start": "2026-06-24",
+                "end": "2026-06-29"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp6.2"
+              ],
+              "actual": {
+                "start": "2026-06-24",
+                "end": "2026-06-30"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "sp7",
+          "ja": "スプリント7",
+          "en": "Sprint 7",
+          "children": [
+            {
+              "id": "sp7.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "MT",
+              "plan": {
+                "start": "2026-06-26",
+                "end": "2026-06-30"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp6.3"
+              ],
+              "actual": {
+                "start": "2026-06-26",
+                "end": "2026-06-30"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp7.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "MT",
+              "plan": {
+                "start": "2026-07-01",
+                "end": "2026-07-03"
+              },
+              "personDays": 3,
+              "deps": [
+                "sp7.1"
+              ],
+              "actual": {
+                "start": "2026-07-02",
+                "end": "2026-07-03"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sp7.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "MT",
+              "plan": {
+                "start": "2026-07-06",
+                "end": "2026-07-07"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp7.2"
+              ],
+              "actual": {
+                "start": "2026-07-06",
+                "end": null
+              },
+              "progress": 0.05
+            }
+          ]
+        },
+        {
+          "id": "sp8",
+          "ja": "スプリント8",
+          "en": "Sprint 8",
+          "children": [
+            {
+              "id": "sp8.1",
+              "ja": "計画・設計",
+              "en": "Plan & design",
+              "who": "IN",
+              "plan": {
+                "start": "2026-07-10",
+                "end": "2026-07-13"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp7.3"
+              ],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "sp8.2",
+              "ja": "実装",
+              "en": "Build",
+              "who": "MT",
+              "plan": {
+                "start": "2026-07-14",
+                "end": "2026-07-15"
+              },
+              "personDays": 2,
+              "deps": [
+                "sp8.1"
+              ],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "sp8.3",
+              "ja": "QA・リリース",
+              "en": "QA & release",
+              "who": "YS",
+              "plan": {
+                "start": "2026-07-16",
+                "end": "2026-07-22"
+              },
+              "personDays": 4,
+              "deps": [
+                "sp8.2"
+              ],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "ja": "データ分析基盤構築",
+      "en": "Data platform",
+      "accent": false,
+      "milestones": [
+        {
+          "date": "2026-04-24",
+          "ja": "PoC判定",
+          "en": "PoC gate"
+        },
+        {
+          "date": "2026-09-30",
+          "ja": "全社展開",
+          "en": "Company-wide rollout",
+          "rose": true
+        }
+      ],
+      "children": [
+        {
+          "id": "dp.a",
+          "ja": "評価・PoC",
+          "en": "Evaluation & PoC",
+          "children": [
+            {
+              "id": "dp1.1",
+              "ja": "現状データ棚卸し",
+              "en": "Data inventory",
+              "who": "ACME",
+              "plan": {
+                "start": "2026-02-02",
+                "end": "2026-02-09"
+              },
+              "personDays": 6,
+              "deps": [],
+              "actual": {
+                "start": "2026-02-02",
+                "end": "2026-02-09"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp1.2",
+              "ja": "基盤アーキ選定",
+              "en": "Platform selection",
+              "who": "ACME",
+              "plan": {
+                "start": "2026-02-10",
+                "end": "2026-02-24"
+              },
+              "personDays": 9,
+              "deps": [
+                "dp1.1"
+              ],
+              "actual": {
+                "start": "2026-02-10",
+                "end": "2026-02-25"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp1.3",
+              "ja": "PoC構築",
+              "en": "PoC build",
+              "who": "NK",
+              "plan": {
+                "start": "2026-02-25",
+                "end": "2026-03-06"
+              },
+              "personDays": 8,
+              "deps": [
+                "dp1.2"
+              ],
+              "actual": {
+                "start": "2026-02-25",
+                "end": "2026-03-06"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp1.4",
+              "ja": "PoC評価",
+              "en": "PoC evaluation",
+              "who": "HS",
+              "plan": {
+                "start": "2026-03-09",
+                "end": "2026-03-17"
+              },
+              "personDays": 7,
+              "deps": [
+                "dp1.3"
+              ],
+              "actual": {
+                "start": "2026-03-09",
+                "end": "2026-03-18"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "dp.b",
+          "ja": "構築",
+          "en": "Build",
+          "children": [
+            {
+              "id": "dp2.1",
+              "ja": "ETLパイプライン実装",
+              "en": "ETL pipelines",
+              "who": "HS",
+              "plan": {
+                "start": "2026-03-18",
+                "end": "2026-04-06"
+              },
+              "personDays": 13,
+              "deps": [
+                "dp1.4"
+              ],
+              "actual": {
+                "start": "2026-03-18",
+                "end": "2026-04-08"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp2.2",
+              "ja": "DWHモデリング",
+              "en": "DWH modeling",
+              "who": "HS",
+              "plan": {
+                "start": "2026-04-07",
+                "end": "2026-04-23"
+              },
+              "personDays": 13,
+              "deps": [
+                "dp2.1"
+              ],
+              "actual": {
+                "start": "2026-04-07",
+                "end": "2026-04-23"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp2.3",
+              "ja": "BIダッシュボード構築",
+              "en": "BI dashboards",
+              "who": "HS",
+              "plan": {
+                "start": "2026-04-24",
+                "end": "2026-05-13"
+              },
+              "personDays": 10,
+              "deps": [
+                "dp2.2"
+              ],
+              "actual": {
+                "start": "2026-04-27",
+                "end": "2026-05-13"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp2.4",
+              "ja": "データ品質チェック実装",
+              "en": "DQ checks",
+              "who": "HS",
+              "plan": {
+                "start": "2026-05-14",
+                "end": "2026-05-28"
+              },
+              "personDays": 11,
+              "deps": [
+                "dp2.3"
+              ],
+              "actual": {
+                "start": "2026-05-14",
+                "end": "2026-05-29"
+              },
+              "progress": 1
+            }
+          ]
+        },
+        {
+          "id": "dp.c",
+          "ja": "展開",
+          "en": "Rollout",
+          "children": [
+            {
+              "id": "dp3.1",
+              "ja": "部門展開トレーニング",
+              "en": "Dept. training",
+              "who": "NK",
+              "plan": {
+                "start": "2026-05-29",
+                "end": "2026-06-04"
+              },
+              "personDays": 5,
+              "deps": [
+                "dp2.4"
+              ],
+              "actual": {
+                "start": "2026-05-29",
+                "end": "2026-06-05"
+              },
+              "progress": 1
+            },
+            {
+              "id": "dp3.2",
+              "ja": "旧レポート廃止",
+              "en": "Legacy report sunset",
+              "who": "NK",
+              "plan": {
+                "start": "2026-06-05",
+                "end": "2026-06-10"
+              },
+              "personDays": 4,
+              "deps": [
+                "dp3.1"
+              ],
+              "actual": {
+                "start": "2026-06-05",
+                "end": "2026-06-12"
+              },
+              "progress": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "ja": "セキュリティ強化",
+      "en": "Security hardening",
+      "accent": false,
+      "milestones": [
+        {
+          "date": "2026-10-30",
+          "ja": "監査完了",
+          "en": "Audit complete",
+          "rose": true
+        }
+      ],
+      "children": [
+        {
+          "id": "sec",
+          "ja": "年間施策",
+          "en": "Annual program",
+          "children": [
+            {
+              "id": "sec.1",
+              "ja": "脆弱性診断（Web）",
+              "en": "Web vuln assessment",
+              "who": "WT",
+              "plan": {
+                "start": "2026-05-11",
+                "end": "2026-05-20"
+              },
+              "personDays": 8,
+              "deps": [],
+              "actual": {
+                "start": "2026-05-11",
+                "end": "2026-05-20"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sec.2",
+              "ja": "脆弱性診断（モバイル）",
+              "en": "Mobile vuln assessment",
+              "who": "WT",
+              "plan": {
+                "start": "2026-06-01",
+                "end": "2026-06-09"
+              },
+              "personDays": 7,
+              "deps": [],
+              "actual": {
+                "start": "2026-06-01",
+                "end": "2026-06-09"
+              },
+              "progress": 1
+            },
+            {
+              "id": "sec.3",
+              "ja": "指摘事項改修",
+              "en": "Remediation",
+              "who": "KT",
+              "plan": {
+                "start": "2026-07-01",
+                "end": "2026-07-22"
+              },
+              "personDays": 15,
+              "deps": [
+                "sec.1",
+                "sec.2"
+              ],
+              "actual": {
+                "start": "2026-07-01",
+                "end": null
+              },
+              "progress": 0.06
+            },
+            {
+              "id": "sec.4",
+              "ja": "ISMS内部監査",
+              "en": "ISMS internal audit",
+              "who": "KT",
+              "plan": {
+                "start": "2026-08-17",
+                "end": "2026-08-21"
+              },
+              "personDays": 5,
+              "deps": [
+                "sec.3"
+              ],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "sec.5",
+              "ja": "標的型攻撃訓練",
+              "en": "Phishing drill",
+              "who": "WT",
+              "plan": {
+                "start": "2026-09-07",
+                "end": "2026-09-09"
+              },
+              "personDays": 3,
+              "deps": [],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            },
+            {
+              "id": "sec.6",
+              "ja": "BCP机上訓練",
+              "en": "BCP tabletop",
+              "who": "WT",
+              "plan": {
+                "start": "2026-10-05",
+                "end": "2026-10-06"
+              },
+              "personDays": 2,
+              "deps": [],
+              "actual": {
+                "start": null,
+                "end": null
+              },
+              "progress": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -88,6 +88,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
+  get VERSION(){ return 'v2.1.0 · 2026-07-06'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -1112,16 +1113,35 @@ class Component extends DCLogic {
   }
 
   renderSummaryBar(r,g,rowH){
-    const e=React.createElement, T=this.T, a=r.agg; if(!a||!a.ps) return null;
+    const e=React.createElement, T=this.T, st=this.state, a=r.agg; if(!a||!a.ps) return null;
     const x1=this.dateToX(a.ps,g), x2=this.dateToX(a.pe,g)+g.px, w=Math.max(x2-x1,4);
     const isProj=r.kind==='project';
     const h=isProj?7:5, top=(rowH-h)/2;
     const col=isProj?T.blue:T.dim;
-    return e('div',{style:{position:'absolute',left:x1,top,width:w,height:h}},
-      e('div',{style:{position:'absolute',inset:0,borderRadius:h/2,background:this.hex(col,T.dark?.28:.2)}}),
-      e('div',{style:{position:'absolute',left:0,top:0,height:'100%',width:Math.max(a.prog*100,a.prog>0?2:0)+'%',borderRadius:h/2,background:this.hex(col,T.dark?.85:.72)}}),
-      e('div',{style:{position:'absolute',left:-1,top:-2.5,width:2.5,height:h+5,borderRadius:2,background:this.hex(col,.55)}}),
-      e('div',{style:{position:'absolute',right:-1,top:-2.5,width:2.5,height:h+5,borderRadius:2,background:this.hex(col,.55)}}));
+    const kids=[
+      e('div',{key:'bar',style:{position:'absolute',left:x1,top,width:w,height:h}},
+        e('div',{style:{position:'absolute',inset:0,borderRadius:h/2,background:this.hex(col,T.dark?.28:.2)}}),
+        e('div',{style:{position:'absolute',left:0,top:0,height:'100%',width:Math.max(a.prog*100,a.prog>0?2:0)+'%',borderRadius:h/2,background:this.hex(col,T.dark?.85:.72)}}),
+        e('div',{style:{position:'absolute',left:-1,top:-2.5,width:2.5,height:h+5,borderRadius:2,background:this.hex(col,.55)}}),
+        e('div',{style:{position:'absolute',right:-1,top:-2.5,width:2.5,height:h+5,borderRadius:2,background:this.hex(col,.55)}}))];
+    // bar labels for group/project rows (dates outside, name right — no owner for groups)
+    const bl=st.barLabels||{}; const mono="'JetBrains Mono','Inter',monospace";
+    if(!st.edit){
+      if(bl.dates){
+        kids.push(e('div',{key:'ds',style:{position:'absolute',left:x1-7,top:0,height:rowH,transform:'translateX(-100%)',display:'flex',alignItems:'center',fontSize:9.5,fontWeight:500,color:T.faint,fontFamily:mono,whiteSpace:'nowrap',pointerEvents:'none'}}, this.fmtMD(a.ps)));
+      }
+      let rightX=x2+7;
+      if(bl.dates){
+        const es=this.fmtMD(a.pe);
+        kids.push(e('div',{key:'de',style:{position:'absolute',left:rightX,top:0,height:rowH,display:'flex',alignItems:'center',fontSize:9.5,fontWeight:500,color:T.faint,fontFamily:mono,whiteSpace:'nowrap',pointerEvents:'none'}}, es));
+        rightX += this.measureText(es,9.5,500)+10;
+      }
+      if(bl.name){
+        const nm=st.lang==='ja'?r.node.ja:r.node.en;
+        kids.push(e('div',{key:'nm',style:{position:'absolute',left:rightX,top:0,height:rowH,display:'flex',alignItems:'center',fontSize:11,fontWeight:isProj?700:600,color:isProj?T.text:T.dim,whiteSpace:'nowrap',pointerEvents:'none'}}, nm));
+      }
+    }
+    return kids;
   }
 
   renderMilestones(r,g,rowH){
@@ -1388,7 +1408,8 @@ class Component extends DCLogic {
         e('span',{style:{fontSize:11.5,fontWeight:600,color:T.dim}}, L.overall),
         e('div',{style:{width:120,height:6,borderRadius:3,background:T.track,overflow:'hidden'}},
           e('div',{style:{width:overall+'%',height:'100%',background:T.blue,borderRadius:3}})),
-        e('span',{style:{fontSize:12,fontWeight:700,color:T.blue,fontFamily:"'JetBrains Mono',monospace"}}, overall+'%')));
+        e('span',{style:{fontSize:12,fontWeight:700,color:T.blue,fontFamily:"'JetBrains Mono',monospace"}}, overall+'%')),
+      e('span',{title:'build revision',style:{fontSize:9,color:this.hex(T.faint,.55),fontFamily:"'JetBrains Mono',monospace",whiteSpace:'nowrap',marginLeft:10,userSelect:'all'}}, this.VERSION));
   }
 
   // ---------- utils ----------

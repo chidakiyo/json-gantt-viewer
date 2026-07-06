@@ -33,6 +33,7 @@
 **日常の同期は Code 側で完結**: `src/` を変更したら `node scripts/sync-dist.mjs` を実行（Component ロジック・props・インラインスタイルを dist に反映。依存ゼロ）。
 例外: `<helmet>`（フォント・@keyframes）や `src/support.js` の変更は同期不可 — スクリプトが検知して中断するので、Design に再バンドルを依頼する。詳細は `docs/BUNDLE.md` / `docs/CC-HANDOFF.md`。
 **`src/` を変更したら必ず `dist/` を更新して同期する。**
+リリース時はロジック内の `get VERSION()` の文字列（`vX.Y.Z · 日付`）を更新すること。画面右下ステータスバー端に薄く表示され、github.io 上でどのリビジョンが出ているか判別できる。
 
 ## 動作確認
 

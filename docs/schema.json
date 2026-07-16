@@ -275,7 +275,7 @@
             },
             "end": {
               "$ref": "#/$defs/dateOrNull",
-              "description": "null=進行中"
+              "description": "null=進行中。日付を入れる（完了扱いにする）場合は progress を必ず 1 にすること"
             }
           },
           "patternProperties": {
@@ -288,20 +288,22 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "0〜1 の小数。※ 1 を超える値はビューアー側で %表記とみなし /100 に自動補正されるが、生成時は必ず 0〜1 で出力すること"
+          "description": "0〜1 の小数。※ 1 を超える値はビューアー側で %表記とみなし /100 に自動補正されるが、生成時は必ず 0〜1 で出力すること。actual.end に日付を入れた完了タスクでは必ず 1 にする（矛盾させない）"
         },
         "personDays": {
           "type": "number",
           "minimum": 0
         },
         "critical": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "クリティカルパス上のタスクなら true。true のタスク同士は deps で連結した一続きの鎖になるように付けること"
         },
         "deps": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "先行タスクの id 配列。実在するタスク id のみ。依存は FS（先行の終了→自分の開始）のみで、ラグや SS/FF は表現できない"
         },
         "note": {
           "type": "string"

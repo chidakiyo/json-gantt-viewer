@@ -89,7 +89,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.3.0 · 2026-07-06'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.3.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -435,9 +435,14 @@ class Component extends DCLogic {
     return rows;
   }
   agg(tasks){
-    let min=null,max=null,wsum=0,psum=0;
-    tasks.forEach(t=>{ const s=this.pd(t.ps),e=this.pd(t.pe); if(s&&(!min||s<min))min=s; if(e&&(!max||e>max))max=e; wsum+=(t.pd||0); psum+=(t.pd||0)*(t.prog||0); });
-    return {ps:min, pe:max, prog: wsum?psum/wsum:0, pd:wsum};
+    let min=null,max=null,wsum=0,psum=0,dsum=0,dpsum=0,n=0,ssum=0;
+    tasks.forEach(t=>{ const s=this.pd(t.ps),e=this.pd(t.pe); if(s&&(!min||s<min))min=s; if(e&&(!max||e>max))max=e;
+      wsum+=(t.pd||0); psum+=(t.pd||0)*(t.prog||0);
+      const dur=(s&&e)? this.dd(s,e)+1:0; dsum+=dur; dpsum+=dur*(t.prog||0);
+      n++; ssum+=(t.prog||0); });
+    // 進捗集計: 人日加重 →（pd が全て未指定なら）期間加重 → 単純平均 の順にフォールバック
+    const prog = wsum? psum/wsum : (dsum? dpsum/dsum : (n? ssum/n : 0));
+    return {ps:min, pe:max, prog, pd:wsum};
   }
   leafMap(){
     const rows=this.buildRows(); const m={};
@@ -1259,7 +1264,9 @@ class Component extends DCLogic {
         const todayX=this.dateToX(this.TODAY,g);
         const pts=[[todayX, 0]];
         leaves.forEach(o=>{ const t=o.r.node, ps=this.pd(t.ps),pe=this.pd(t.pe); if(!ps||!pe){ return; }
-          const ax = this.dateToX(this.addD(ps, Math.round(this.dd(ps,pe)*t.prog)),g)+g.px*t.prog;
+          let ax = this.dateToX(this.addD(ps, Math.round(this.dd(ps,pe)*t.prog)),g)+g.px*t.prog;
+          if(t.prog>=1) ax=Math.max(ax,todayX);      // 完了済み: 予定終了が過去でも左凸（遅延表現）にしない
+          else if(t.prog<=0) ax=Math.min(ax,todayX); // 未着手: 予定開始が未来でも右凸（前倒し表現）にしない
           pts.push([ax, o.i*rowH+rowH/2]); });
         pts.push([todayX, rowsH]);
         const dstr=this.roundPath(pts,7);

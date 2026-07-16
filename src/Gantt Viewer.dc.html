@@ -92,7 +92,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.5.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.5.2 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -1505,8 +1505,7 @@ class Component extends DCLogic {
     const legend=[...statusG];
     if(statusG.length && markG.length) legend.push(divider('dv'));
     legend.push(...markG);
-    let ws=0,ps=0; this.DATA.forEach(p=>this.leavesOf(p).forEach(t=>{ if(t!==p){ ws+=(t.pd||0); ps+=(t.pd||0)*(t.prog||0);} }));
-    const overall=ws? Math.round(ps/ws*100):0;
+    const overall=Math.round((this.agg(this.allLeaves()).prog||0)*100); // グループ集計と同じ定義（人日加重 → 期間加重 → 単純平均フォールバック）
     return e('div',{style:{flex:'0 0 auto',height:38,background:T.headerBg,borderTop:'1px solid '+T.gridStrong,display:'flex',alignItems:'center',gap:16,padding:'0 18px',flexWrap:'nowrap',overflow:'hidden'}},
       e('span',{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:T.faint,flex:'0 0 auto'}}, L.legend),
       legend,

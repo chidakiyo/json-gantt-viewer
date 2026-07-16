@@ -89,7 +89,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.4.0 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.4.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -1218,7 +1218,7 @@ class Component extends DCLogic {
     return (r.milestones||[]).map((ms,i)=>{
       const d=this.pd(ms.date); if(!d) return null;
       const x=this.dateToX(d,g)+g.px/2, c=ms.rose?T.rose:T.ms, sz=11;
-      return e('div',{key:i,title:(ja?ms.ja:ms.en)+' · '+this.fmtMD(d),style:{position:'absolute',left:x,top:rowH/2,transform:'translate(-50%,-50%)',display:'flex',alignItems:'center',gap:6,zIndex:7}},
+      return e('div',{key:i,title:(ja?ms.ja:ms.en)+' · '+this.fmtMD(d),style:{position:'absolute',left:x-sz/2,top:rowH/2,transform:'translateY(-50%)',display:'flex',alignItems:'center',gap:6,zIndex:7}}, // ◇の中心を日付位置に置く（ラベル幅でずらさない）
         e('div',{style:{width:sz,height:sz,background:c,transform:'rotate(45deg)',borderRadius:2,boxShadow: T.glow?'0 0 8px '+this.hex(c,.6):'0 1px 3px rgba(20,28,44,.35)',border:'1.5px solid '+(T.dark?'#0d1420':'#fff'),flex:'0 0 auto'}}),
         e('div',{style:{fontSize:10.5,fontWeight:700,color:c,whiteSpace:'nowrap',fontFamily:"'JetBrains Mono','Noto Sans JP',monospace",
           background:T.panel,border:'1px solid '+this.hex(c,.38),borderRadius:6,padding:'2px 7px',lineHeight:1.2,

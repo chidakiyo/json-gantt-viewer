@@ -308,6 +308,13 @@
         "note": {
           "type": "string"
         },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/milestone"
+          },
+          "description": "この行に表示するマイルストーン（◇）。プロジェクトだけでなく任意の階層（グループ行）に置ける"
+        },
         "children": {
           "type": "array",
           "items": {

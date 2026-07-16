@@ -89,7 +89,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.3.2 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.4.0 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -260,8 +260,9 @@ class Component extends DCLogic {
     const normNode=(t)=>{ const pl=t.plan||{}, ac=t.actual||{};
       const kids=(t.children||t.tasks||[]).map(normNode);
       const ae=(ac.end!==undefined?ac.end:t.ae)||null; // actual.end があれば完了 → progress を 1 に補正（整合規則）
+      const ms=(t.milestones||[]).map(m=>({date:m.date, ja:m.ja||m.en||'', en:m.en||m.ja||'', rose:!!m.rose})); // v2.4: 任意階層のマイルストーン
       return {
-        id:String(t.id!=null?t.id:this.genId()), ja:t.ja||t.en||'', en:t.en||t.ja||'', who:t.who||null,
+        id:String(t.id!=null?t.id:this.genId()), ja:t.ja||t.en||'', en:t.en||t.ja||'', who:t.who||null, ...(ms.length?{milestones:ms}:{}),
         ps:pl.start||t.ps||null, pe:pl.end||t.pe||null, as:(ac.start!==undefined?ac.start:t.as)||null, ae,
         prog: ae?1:this.clampProg(typeof t.progress==='number'?t.progress:(typeof t.prog==='number'?t.prog:0)), pd:Math.max(0,t.personDays||t.pd||0),
         crit:!!(t.critical||t.crit), deps:(t.deps||[]).map(String), note:t.note||'', children:kids }; };
@@ -276,6 +277,7 @@ class Component extends DCLogic {
   serializeDoc(){
     const D=this.curDoc();
     const wnode=(n)=>{ const o={id:n.id, ja:n.ja, en:n.en};
+      if(n.milestones&&n.milestones.length) o.milestones=n.milestones.map(m=>{ const x={date:m.date, ja:m.ja, en:m.en}; if(m.rose) x.rose=true; return x; });
       if(n.children && n.children.length){ if(n.who) o.who=n.who; if(n.crit) o.critical=true; if(n.deps&&n.deps.length) o.deps=n.deps.slice(); if(n.note) o.note=n.note; o.children=n.children.map(wnode); return o; }
       if(n.who) o.who=n.who;
       o.plan={start:n.ps||null, end:n.pe||null}; o.actual={start:n.as||null, end:n.ae||null};
@@ -329,6 +331,8 @@ class Component extends DCLogic {
 
   // ---------- file I/O ----------
   loadJsonText(txt,name,handle){ try{ const j=JSON.parse(txt); const doc=this.normalizeDoc(j); if(!doc.projects.length) throw new Error(this.state.lang==='ja'?'projects が空です':'no projects found');
+      { const seen=new Set(), dups=new Set(); const recId=n=>{ if(seen.has(n.id)) dups.add(n.id); seen.add(n.id); (n.children||[]).forEach(recId); }; doc.projects.forEach(recId);
+        if(dups.size) window.alert((this.state.lang==='ja'?'警告: id が重複しています。deps の矢印や編集操作が誤動作する可能性があります:\n':'Warning: duplicate ids — dependency arrows and editing may misbehave:\n')+[...dups].join(', ')); }
       this.fileHandle=handle||null; this.past=[]; this.future=[];
       this.setState({doc, fileName:name||null, dirty:false, collapsed:{}, outLv:3, sel:null}, ()=>{ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollLeft=Math.max(0,this.dateToX(this.TODAY,g)-340); });
     }catch(e){ window.alert((this.state.lang==='ja'?'JSONの読み込みに失敗しました:\n':'Failed to load JSON:\n')+e.message); } }
@@ -373,8 +377,8 @@ class Component extends DCLogic {
   geo(){
     let min=null, max=null;
     const scan=s=>{ if(!s) return; const d=this.pd(s); if(!d) return; if(!min||d<min)min=d; if(!max||d>max)max=d; };
-    const rec=n=>{ [n.ps,n.pe,n.as,n.ae].forEach(scan); (n.children||[]).forEach(rec); };
-    this.DATA.forEach(p=>{ (p.milestones||[]).forEach(m=>scan(m.date)); rec(p); });
+    const rec=n=>{ [n.ps,n.pe,n.as,n.ae].forEach(scan); (n.milestones||[]).forEach(m=>scan(m.date)); (n.children||[]).forEach(rec); };
+    this.DATA.forEach(rec);
     const dg=this.state.drag; if(dg && dg.ps && dg.pe){ scan(this.iso(dg.ps)); scan(this.iso(dg.pe)); }
     if(!min){ min=this.TODAY; max=this.addD(this.TODAY,30); }
     if(!max) max=this.addD(min,30);
@@ -428,7 +432,7 @@ class Component extends DCLogic {
       const kind = depth===0 ? 'project' : (kids.length? 'group':'task');
       const row={kind, id:n.id, depth, no, node:n, parent:parentId};
       if(kind!=='task') row.agg=this.agg(this.leavesOf(n).filter(x=>x!==n));
-      if(kind==='project') row.milestones=n.milestones;
+      if(n.milestones&&n.milestones.length) row.milestones=n.milestones; // v2.4: 任意階層に置ける
       rows.push(row);
       if(kind!=='task' && !st.collapsed[n.id]) kids.forEach((c,i)=>walk(c,depth+1,no+'.'+(i+1),n.id));
     };
@@ -725,7 +729,7 @@ class Component extends DCLogic {
       btn(L.addTask, ()=>{ if(sel) this.addSibling(sel); else { const rows=this.buildRows(); const last=rows[rows.length-1]; if(last) this.addSibling(last.id); } }, {accent:true}),
       btn(L.addChild, ()=>sel&&this.addChild(sel), {accent:true, disabled:!sel}),
       btn(L.addProj, ()=>this.addProject(), {accent:true}),
-      selRow&&selRow.kind==='project'&&btn(L.addMs, ()=>{ this.mutate(d=>{ const r=this.findNode(d,sel); if(r){ r.node.milestones=r.node.milestones||[]; r.node.milestones.push({date:this.iso(this.TODAY), ja:this.L.newMsName, en:'Milestone', rose:false}); } }); this.setState({panel:true, panelMode:'node'}); }, {accent:true}),
+      selRow&&selRow.kind!=='task'&&btn(L.addMs, ()=>{ this.mutate(d=>{ const r=this.findNode(d,sel); if(r){ r.node.milestones=r.node.milestones||[]; r.node.milestones.push({date:this.iso(this.TODAY), ja:this.L.newMsName, en:'Milestone', rose:false}); } }); this.setState({panel:true, panelMode:'node'}); }, {accent:true}),
       e('div',{style:{width:1,height:22,background:T.gridStrong}}),
       btn('⚙ '+L.settings, ()=>this.setState(s=>({panel:!(s.panel&&s.panelMode==='settings'), panelMode:'settings'}))),
       btn(L.newFile, ()=>this.newDoc()),
@@ -876,7 +880,7 @@ class Component extends DCLogic {
         this.renderDataCells(r)),
       e('div',{style:{position:'relative',width:g.w,flex:'0 0 auto'}},
         isTask? this.renderTaskBar(r.node,g,rowH,hov||sel) : this.renderSummaryBar(r,g,rowH),
-        isProj&&st.layers.milestones? this.renderMilestones(r,g,rowH):null));
+        st.layers.milestones&&r.milestones? this.renderMilestones(r,g,rowH):null));
   }
 
   renderNameCell(r,rowH,rowIdx){
@@ -1373,8 +1377,8 @@ class Component extends DCLogic {
     }
     // note
     body.push(this.panelField(L.noteL, this.panelInput(n.note, v=>this.setField(n.id,'note',v), {area:true, k:n.id+'note'})));
-    // milestones (project)
-    if(isProj){
+    // milestones (project / group — 任意階層に置ける)
+    if(!isLeaf){
       body.push(e('div',{key:'d2',style:{height:1,background:T.grid}}));
       body.push(this.panelField(L.msL, e('div',{style:{display:'flex',flexDirection:'column',gap:7}},
         (n.milestones||[]).map((ms,i)=>e('div',{key:i,style:{display:'flex',alignItems:'center',gap:5}},

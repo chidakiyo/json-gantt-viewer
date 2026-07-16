@@ -197,6 +197,13 @@
               ],
               "children": []
             }
+          ],
+          "milestones": [
+            {
+              "date": "2026-06-17",
+              "ja": "デザイン確定",
+              "en": "Design sign-off"
+            }
           ]
         },
         {

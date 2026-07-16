@@ -93,7 +93,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.6.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.6.2 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -149,7 +149,7 @@ class Component extends DCLogic {
 
   get I18N(){ return {
     ja:{ title:'ガントチャート ビューアー', subtitle:'ソフトウェア開発ロードマップ', today:'本日', scale:'尺度', day:'日', week:'週', month:'月',
-      layers:'表示レイヤー', columns:'列', projects:'プロジェクト', showAll:'すべて表示', design:'デザイン', jumpToday:'本日へ', resetPrefs:'表示設定を初期化',
+      layers:'表示レイヤー', columns:'列', projects:'プロジェクト', showAll:'すべて表示', design:'デザイン', prefs:'表示設定', jumpToday:'本日へ', resetPrefs:'表示設定を初期化',
       zoomIn:'横幅を拡大', zoomOut:'横幅を縮小', zoomReset:'100% に戻す', zoomHint:'横幅の倍率',
       labels:'バー注記', lbDates:'開始/終了日（外側）', lbName:'タスク名（右横）', lbOwner:'担当者（左横・アバター）',
       task:'タスク', owner:'担当', effort:'工数', days:'期間', progress:'進捗',
@@ -165,7 +165,7 @@ class Component extends DCLogic {
       newTaskName:'新しいタスク', newProjName:'新しいプロジェクト', newMsName:'マイルストーン', selHint:'行の No. をクリックすると詳細パネルが開きます',
       fsUnsupported:'このブラウザは直接上書きに未対応のため、ダウンロード保存します' },
     en:{ title:'Gantt Chart Viewer', subtitle:'Software delivery roadmap', today:'Today', scale:'Scale', day:'Day', week:'Week', month:'Month',
-      layers:'Layers', columns:'Columns', projects:'Projects', showAll:'Show all', design:'Design', jumpToday:'Today', resetPrefs:'Reset view settings',
+      layers:'Layers', columns:'Columns', projects:'Projects', showAll:'Show all', design:'Design', prefs:'View settings', jumpToday:'Today', resetPrefs:'Reset view settings',
       zoomIn:'Zoom in (width)', zoomOut:'Zoom out (width)', zoomReset:'Reset to 100%', zoomHint:'Horizontal zoom',
       labels:'Bar labels', lbDates:'Start/end dates (outside)', lbName:'Task name (right)', lbOwner:'Owner (left, avatar)',
       task:'Task', owner:'Owner', effort:'Effort', days:'Days', progress:'Progress',
@@ -625,7 +625,7 @@ class Component extends DCLogic {
 
   renderToolbar(){
     const e=React.createElement, T=this.T, L=this.L, st=this.state;
-    const iconBtn=(label,active,onClick)=>e('button',{onClick,'data-menu':true,
+    const iconBtn=(label,active,onClick,title)=>e('button',{onClick,'data-menu':true,title,
       style:{position:'relative',display:'inline-flex',alignItems:'center',gap:6,border:'1px solid '+(active?T.blue:T.gridStrong),cursor:'pointer',flex:'0 0 auto',whiteSpace:'nowrap',
         padding:'6px 11px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',
         background: active?(T.dark?'rgba(91,141,239,.14)':'#eef4fe'):T.panel, color: active?T.blue:T.dim,transition:'all .15s'}}, label);
@@ -705,9 +705,9 @@ class Component extends DCLogic {
         style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'6px 11px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',display:'inline-flex',alignItems:'center',gap:6,flex:'0 0 auto',whiteSpace:'nowrap'}},
         e('span',{style:{width:7,height:7,borderRadius:'50%',background:T.today,flex:'0 0 auto'}}), e('span',{style:{whiteSpace:'nowrap'}}, L.jumpToday)),
 
-      // デザイン・配色・言語・リセットを1つのメニューに集約（ヘッダー幅の圧縮）
+      // デザイン・配色・言語・リセットを1つの設定メニューに集約（ヘッダー幅の圧縮）
       e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('⚙ '+L.design, st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'}))),
+        iconBtn('⚙', st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'})), L.prefs),
         st.openMenu==='design'&&this.renderDesignMenu()),
     );
   }
@@ -808,14 +808,15 @@ class Component extends DCLogic {
     const pals=this.PALETTES;
     const sect=label=>e('div',{style:{...this.menuTitle(T),paddingTop:10}}, label);
     return e('div',{style:{...this.menuStyle(T,232),left:'auto',right:0}},
-      e('div',{style:this.menuTitle(T)}, L.design),
-      e('div',{style:{display:'flex',gap:5,padding:'0 8px 2px'}},
-        ['A','B','C'].map(v=>{ const th=this.STRUCT[v]; const on=st.variant===v;
-          return e('button',{key:v+'|'+on, onClick:()=>this.setState({variant:v}), title:v+' · '+th.nm[st.lang],
-            style:{flex:1,minWidth:0,border:'1px solid '+(on?T.blue:T.gridStrong),cursor:'pointer',padding:'6px 4px',borderRadius:8,fontFamily:'inherit',
-              background:on?this.hex(T.blue,T.dark?.16:.09):T.panel,color:on?T.blue:T.dim,display:'flex',alignItems:'center',justifyContent:'center',gap:5,transition:'all .15s',whiteSpace:'nowrap',overflow:'hidden'}},
-            e('span',{style:{fontSize:11,fontWeight:700}}, v),
-            on&&e('span',{style:{fontSize:11,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis'}}, th.nm[st.lang])); })),
+      e('div',{style:this.menuTitle(T)}, L.prefs),
+      e('div',{style:{...this.menuTitle(T),paddingTop:2}}, L.design),
+      ['A','B','C'].map(v=>{ const th=this.STRUCT[v]; const on=st.variant===v;
+        return e('button',{key:v+'|'+on, onClick:()=>this.setState({variant:v}),
+          style:{display:'flex',alignItems:'center',gap:10,width:'100%',border:'none',background:on?T.hover:'transparent',cursor:'pointer',padding:'7px 8px',borderRadius:7,fontFamily:'inherit',color:T.text,textAlign:'left'},
+          onMouseEnter:ev=>{ if(!on) ev.currentTarget.style.background=T.hover; }, onMouseLeave:ev=>{ if(!on) ev.currentTarget.style.background='transparent'; }},
+          e('span',{style:{width:20,height:20,borderRadius:6,border:'1px solid '+(on?T.blue:T.gridStrong),background:on?this.hex(T.blue,T.dark?.16:.09):'transparent',color:on?T.blue:T.dim,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10.5,fontWeight:700,flex:'0 0 auto'}}, v),
+          e('span',{style:{fontSize:12.5,fontWeight:on?700:500,flex:1}}, th.nm[st.lang]),
+          on&&e('span',{style:{color:T.blue,fontWeight:700,fontSize:13}}, '✓')); }),
       sect(ja?'配色':'Palette'),
       e('div',{style:{maxHeight:236,overflowY:'auto'}},
         Object.keys(pals).map(k=>{ const p=pals[k], on=st.palette===k;

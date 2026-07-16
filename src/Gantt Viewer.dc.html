@@ -92,7 +92,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.5.0 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.5.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -197,6 +197,7 @@ class Component extends DCLogic {
     if(!(cal.workweek||[1,2,3,4,5]).includes(d.getDay())) return {weekend:true};
     return {}; }
   wday(i){ return (this.state.lang==='ja'?['日','月','火','水','木','金','土']:['Su','Mo','Tu','We','Th','Fr','Sa'])[i]; }
+  workdays(a,b){ let n=0; for(let d=new Date(a); d<=b; d=this.addD(d,1)){ const k=this.dayKind(d); if(!k.weekend&&!k.holiday) n++; } return n; } // 稼働日数（週末・祝日抜き、extraWorkdays は稼働）
 
   get DATA(){ return (this.state.doc && this.state.doc.projects) || this._defProjects; }
   get _defProjects(){ if(!this.__defP){ this.__defP = [
@@ -585,11 +586,9 @@ class Component extends DCLogic {
     const row=(k,v,c)=>e('div',{style:{display:'flex',justifyContent:'space-between',gap:18,alignItems:'baseline'}},
       e('span',{style:{color:T.faint,fontSize:11,whiteSpace:'nowrap'}},k),
       e('span',{style:{color:c||T.text,fontSize:11.5,fontWeight:600,fontFamily:mono,whiteSpace:'nowrap'}},v));
-    const dayU=ja?'日':'d';
-    const days=(d.ps&&d.pe)? this.dd(d.ps,d.pe)+1 : null; // 期間(暦日)。「日数」列と同じ定義
-    const plan=this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)+(days!=null?' ('+days+dayU+')':'');
-    const aDays=(d.as&&d.ae)? this.dd(this.pd(d.as),this.pd(d.ae))+1 : null;
-    const actual=(d.as?this.fmtMD(this.pd(d.as)):'—')+' → '+(d.ae?this.fmtMD(this.pd(d.ae)):(d.as?(ja?'進行中':'WIP'):'—'))+(aDays!=null?' ('+aDays+dayU+')':'');
+    const span=(s,x)=>{ if(!s||!x) return ''; const cd=this.dd(s,x)+1, wd=this.workdays(s,x); return ' ('+cd+(ja?'日':'d')+'/'+wd+(ja?'日':'wd')+')'; }; // 暦日/稼働日
+    const plan=this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)+span(d.ps,d.pe);
+    const actual=(d.as?this.fmtMD(this.pd(d.as)):'—')+' → '+(d.ae?this.fmtMD(this.pd(d.ae)):(d.as?(ja?'進行中':'WIP'):'—'))+((d.as&&d.ae)?span(this.pd(d.as),this.pd(d.ae)):'');
     const body = d.group? [
         row(ja?'期間':'Span', plan),
         row(ja?'進捗':'Progress', Math.round(d.prog*100)+'%', sc),

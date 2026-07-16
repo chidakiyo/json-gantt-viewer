@@ -51,6 +51,8 @@ class Component extends DCLogic {
       cols: Object.assign({ assignee:true, workload:true, duration:true, progress:true }, saved.cols),
       barLabels: Object.assign({ dates:false, name:false, owner:false }, saved.barLabels),
       autoSave: !!saved.autoSave,
+      autoReload: saved.autoReload!==false, // 既定オン: 開いたファイルが外部で変わったら自動で読み直す
+      extChanged: false,                    // 未保存編集中に外部変更を検知したフラグ（通知のみ）
       edit: false,
       panel: false,
       panelMode: 'node', // 'node' | 'settings'
@@ -79,17 +81,18 @@ class Component extends DCLogic {
       if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) this.redo(); else this.undo(); }
     });
     this._bootT = setTimeout(() => this.setState({ booted: true }), 520);
+    this._pollT = setInterval(() => this.pollFile(), 1500); // 外部変更のポーリング（File System Access API で開いた場合のみ動く）
   }
-  componentWillUnmount(){ document.removeEventListener('mousedown', this._closeMenu); document.removeEventListener('keydown', this._keys); clearTimeout(this._bootT); clearTimeout(this._asT); }
+  componentWillUnmount(){ document.removeEventListener('mousedown', this._closeMenu); document.removeEventListener('keydown', this._keys); clearTimeout(this._bootT); clearTimeout(this._asT); clearInterval(this._pollT); }
 
   // ---------- preferences ----------
   get PREF_KEY(){ return 'jsonGanttViewer.prefs.v1'; }
   loadPrefs(){ try{ const s=localStorage.getItem(this.PREF_KEY); return s? JSON.parse(s):{}; }catch(e){ return {}; } }
-  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, zoom:st.zoom })); }catch(e){} }
-  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
+  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, autoReload:st.autoReload, zoom:st.zoom })); }catch(e){} }
+  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.4.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.5.0 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -152,7 +155,7 @@ class Component extends DCLogic {
       lPlan:'予定バー', lProgress:'実績・進捗', lMs:'マイルストーン', lDeps:'依存関係', lCrit:'クリティカルパス', lIna:'イナズマ線', lToday:'本日線', lWeekend:'週末シェード', lHoliday:'祝日', lGrid:'グリッド線',
       legend:'凡例', ontrack:'順調', risk:'要注意', delay:'遅延', done:'完了', notstarted:'未着手', critical:'クリティカル',
       plan:'予定', actual:'実績', pd:'人日', overall:'全体進捗',
-      view:'閲覧', edit:'編集', save:'保存', autoSave:'自動保存', unsaved:'未保存', savedOk:'保存済み',
+      view:'閲覧', edit:'編集', save:'保存', autoSave:'自動保存', autoReload:'自動再読込', reloadNow:'⟳ 再読込', extChanged:'ファイルが外部で変更されています', confirmReload:'未保存の編集を破棄して、外部の変更を読み込みますか？', unsaved:'未保存', savedOk:'保存済み',
       addTask:'＋ タスク', addChild:'＋ 子タスク', addProj:'＋ プロジェクト', addMs:'＋ マイルストーン', newFile:'新規作成', settings:'設定',
       indent:'階層下げ ⇥', outdent:'⇤ 階層上げ', delTask:'この行を削除', depsL:'依存関係（先行タスク）', addDep:'＋ 依存を追加…',
       noteL:'備考', msL:'マイルストーン', psL:'予定開始', peL:'予定終了', asL:'実績開始', aeL:'実績終了',
@@ -168,7 +171,7 @@ class Component extends DCLogic {
       lPlan:'Plan bars', lProgress:'Actual / progress', lMs:'Milestones', lDeps:'Dependencies', lCrit:'Critical path', lIna:'Slip line', lToday:'Today line', lWeekend:'Weekend shade', lHoliday:'Holidays', lGrid:'Grid lines',
       legend:'Legend', ontrack:'On track', risk:'At risk', delay:'Delayed', done:'Done', notstarted:'Not started', critical:'Critical',
       plan:'Plan', actual:'Actual', pd:'pd', overall:'Overall',
-      view:'View', edit:'Edit', save:'Save', autoSave:'Auto-save', unsaved:'unsaved', savedOk:'saved',
+      view:'View', edit:'Edit', save:'Save', autoSave:'Auto-save', autoReload:'Auto-reload', reloadNow:'⟳ Reload', extChanged:'File changed on disk', confirmReload:'Discard unsaved edits and load external changes?', unsaved:'unsaved', savedOk:'saved',
       addTask:'+ Task', addChild:'+ Child', addProj:'+ Project', addMs:'+ Milestone', newFile:'New', settings:'Settings',
       indent:'Indent ⇥', outdent:'⇤ Outdent', delTask:'Delete this row', depsL:'Dependencies (predecessors)', addDep:'+ Add dependency…',
       noteL:'Note', msL:'Milestones', psL:'Plan start', peL:'Plan end', asL:'Actual start', aeL:'Actual end',
@@ -333,8 +336,8 @@ class Component extends DCLogic {
   loadJsonText(txt,name,handle){ try{ const j=JSON.parse(txt); const doc=this.normalizeDoc(j); if(!doc.projects.length) throw new Error(this.state.lang==='ja'?'projects が空です':'no projects found');
       { const seen=new Set(), dups=new Set(); const recId=n=>{ if(seen.has(n.id)) dups.add(n.id); seen.add(n.id); (n.children||[]).forEach(recId); }; doc.projects.forEach(recId);
         if(dups.size) window.alert((this.state.lang==='ja'?'警告: id が重複しています。deps の矢印や編集操作が誤動作する可能性があります:\n':'Warning: duplicate ids — dependency arrows and editing may misbehave:\n')+[...dups].join(', ')); }
-      this.fileHandle=handle||null; this.past=[]; this.future=[];
-      this.setState({doc, fileName:name||null, dirty:false, collapsed:{}, outLv:3, sel:null}, ()=>{ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollLeft=Math.max(0,this.dateToX(this.TODAY,g)-340); });
+      this.fileHandle=handle||null; this._mtime=null; this.past=[]; this.future=[];
+      this.setState({doc, fileName:name||null, dirty:false, extChanged:false, collapsed:{}, outLv:3, sel:null}, ()=>{ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollLeft=Math.max(0,this.dateToX(this.TODAY,g)-340); });
     }catch(e){ window.alert((this.state.lang==='ja'?'JSONの読み込みに失敗しました:\n':'Failed to load JSON:\n')+e.message); } }
   async openPicker(){ if(window.showOpenFilePicker){ try{ const [h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]}); const f=await h.getFile(); this.loadJsonText(await f.text(), f.name, h); }catch(e){} }
     else if(this.fileRef.current) this.fileRef.current.click(); }
@@ -343,11 +346,24 @@ class Component extends DCLogic {
     let handle=null; try{ if(it.getAsFileSystemHandle){ handle=await it.getAsFileSystemHandle(); if(handle&&handle.kind!=='file') handle=null; } }catch(e){}
     const f=it.getAsFile&&it.getAsFile(); if(!f) return; this.loadJsonText(await f.text(), f.name, handle); }
   async save(){ const txt=JSON.stringify(this.serializeDoc(),null,2);
-    if(this.fileHandle){ try{ const w=await this.fileHandle.createWritable(); await w.write(txt); await w.close(); this.setState({dirty:false}); return; }catch(e){} }
+    if(this.fileHandle){ try{ const w=await this.fileHandle.createWritable(); await w.write(txt); await w.close(); try{ this._mtime=(await this.fileHandle.getFile()).lastModified; }catch(e){} this.setState({dirty:false, extChanged:false}); return; }catch(e){} }
     if(window.showSaveFilePicker){ try{ const h=await window.showSaveFilePicker({suggestedName:this.state.fileName||'gantt.json', types:[{description:'JSON',accept:{'application/json':['.json']}}]});
-        this.fileHandle=h; const w=await h.createWritable(); await w.write(txt); await w.close(); this.setState({dirty:false, fileName:h.name||this.state.fileName||'gantt.json'}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+        this.fileHandle=h; const w=await h.createWritable(); await w.write(txt); await w.close(); try{ this._mtime=(await h.getFile()).lastModified; }catch(e){} this.setState({dirty:false, extChanged:false, fileName:h.name||this.state.fileName||'gantt.json'}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
     const b=new Blob([txt],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=this.state.fileName||'gantt.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(u),3000); this.setState({dirty:false}); }
   maybeAutosave(){ if(this.state.autoSave && this.fileHandle){ clearTimeout(this._asT); this._asT=setTimeout(()=>this.save(),700); } }
+  // ---------- auto reload（外部変更の追従） ----------
+  async pollFile(){ if(!this.fileHandle || !this.state.autoReload || this.state.drag || this.state.rowDrag) return;
+    let f; try{ f=await this.fileHandle.getFile(); }catch(e){ return; }
+    if(this._mtime==null){ this._mtime=f.lastModified; return; } // 初回は基準時刻の記録のみ
+    if(f.lastModified<=this._mtime) return;
+    if(this.state.dirty){ this._mtime=f.lastModified; if(!this.state.extChanged) this.setState({extChanged:true}); return; } // 未保存編集を守り、通知のみ
+    const txt=await f.text(); if(this.reloadText(txt)) this._mtime=f.lastModified; } // parse 失敗（書き込み途中）は mtime を進めず次回再試行
+  reloadText(txt){ try{ const j=JSON.parse(txt); const doc=this.normalizeDoc(j); if(!doc.projects.length) return false;
+      this.past=[]; this.future=[];
+      this.setState({doc, dirty:false, extChanged:false}); // 折りたたみ・選択・スクロールは維持
+      return true; }catch(e){ return false; } }
+  async forceReload(){ if(!this.fileHandle) return; if(this.state.dirty && !window.confirm(this.L.confirmReload)) return;
+    try{ const f=await this.fileHandle.getFile(); this._mtime=f.lastModified; this.reloadText(await f.text()); }catch(e){} }
   newDoc(){ if(this.state.dirty && !window.confirm(this.L.confirmNew)) return;
     const t=this.TODAY; const doc={ meta:{ja:{title:'新規プロジェクト',subtitle:''},en:{title:'New project',subtitle:''}}, calendar:{workweek:[1,2,3,4,5],holidays:{},extra:{}}, assignees:{},
       projects:[{ id:this.genId(), ja:this.state.lang==='ja'?'新規プロジェクト':'New project', en:'New project', accent:true, milestones:[], children:[ this.newTaskNode() ] }] };
@@ -355,7 +371,7 @@ class Component extends DCLogic {
     this.setState({doc, fileName:null, dirty:true, edit:true, collapsed:{}, sel:null}); }
   resetDoc(){ this.fileHandle=null; this.past=[]; this.future=[]; this.setState({doc:null, fileName:null, dirty:false, collapsed:{}, outLv:3, sel:null}); }
   resetPrefs(){ try{ localStorage.removeItem(this.PREF_KEY); }catch(e){}
-    this.setState({ lang:'ja', variant:'A', density:'default', palette:'ocean', mode:'week', outLv:3, autoSave:false,
+    this.setState({ lang:'ja', variant:'A', density:'default', palette:'ocean', mode:'week', outLv:3, autoSave:false, autoReload:true,
       zoom:1,
       layers:{ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true },
       cols:{ assignee:true, workload:true, duration:true, progress:true },
@@ -563,26 +579,35 @@ class Component extends DCLogic {
     const tip=this.state.tip; if(!tip||this.state.drag) return null;
     const e=React.createElement, T=this.T, L=this.L, d=tip.d, ja=this.state.lang==='ja';
     const a=this.ASSIGNEES[d.who]; const owner=a?(ja?a.ja:a.en):(d.who||'—');
-    const sc=this.statusColor(d.status,T);
+    const sc=d.group? T.blue : this.statusColor(d.status,T);
     const statusLabel={ontrack:L.ontrack,done:L.done,risk:L.risk,delay:L.delay,future:L.notstarted}[d.status]||'';
     const mono="'JetBrains Mono','Inter',monospace";
     const row=(k,v,c)=>e('div',{style:{display:'flex',justifyContent:'space-between',gap:18,alignItems:'baseline'}},
       e('span',{style:{color:T.faint,fontSize:11,whiteSpace:'nowrap'}},k),
       e('span',{style:{color:c||T.text,fontSize:11.5,fontWeight:600,fontFamily:mono,whiteSpace:'nowrap'}},v));
-    const actual=(d.as?this.fmtMD(this.pd(d.as)):'—')+' → '+(d.ae?this.fmtMD(this.pd(d.ae)):(d.as?(ja?'進行中':'WIP'):'—'));
-    const x=Math.min(tip.x+16, window.innerWidth-248), y=Math.min(tip.y+16, window.innerHeight-170);
-    return e('div',{style:{position:'fixed',left:Math.max(8,x),top:Math.max(8,y),zIndex:300,width:224,background:T.panel,border:'1px solid '+T.gridStrong,borderRadius:11,
+    const dayU=ja?'日':'d';
+    const days=(d.ps&&d.pe)? this.dd(d.ps,d.pe)+1 : null; // 期間(暦日)。「日数」列と同じ定義
+    const plan=this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)+(days!=null?' ('+days+dayU+')':'');
+    const aDays=(d.as&&d.ae)? this.dd(this.pd(d.as),this.pd(d.ae))+1 : null;
+    const actual=(d.as?this.fmtMD(this.pd(d.as)):'—')+' → '+(d.ae?this.fmtMD(this.pd(d.ae)):(d.as?(ja?'進行中':'WIP'):'—'))+(aDays!=null?' ('+aDays+dayU+')':'');
+    const body = d.group? [
+        row(ja?'期間':'Span', plan),
+        row(ja?'進捗':'Progress', Math.round(d.prog*100)+'%', sc),
+        row(ja?'工数':'Effort', d.pd+(ja?' 人日':' pd'))]
+      : [
+        row(ja?'担当':'Owner', owner),
+        row(ja?'予定':'Plan', plan),
+        row(ja?'実績':'Actual', actual),
+        row(ja?'進捗':'Progress', Math.round(d.prog*100)+'%', sc),
+        row(ja?'工数':'Effort', d.pd+(ja?' 人日':' pd')),
+        row(ja?'状態':'Status', statusLabel, sc)];
+    const x=Math.min(tip.x+16, window.innerWidth-268), y=Math.min(tip.y+16, window.innerHeight-170);
+    return e('div',{style:{position:'fixed',left:Math.max(8,x),top:Math.max(8,y),zIndex:300,width:244,background:T.panel,border:'1px solid '+T.gridStrong,borderRadius:11,
       boxShadow:T.dark?'0 14px 44px rgba(0,0,0,.55)':'0 14px 36px rgba(20,28,44,.2)',padding:'11px 13px',pointerEvents:'none'}},
       e('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:9}},
         e('span',{style:{width:9,height:9,borderRadius:2,background:sc,flex:'0 0 auto'}}),
         e('div',{style:{fontSize:12.5,fontWeight:700,color:T.text,lineHeight:1.25}}, d.name)),
-      e('div',{style:{display:'flex',flexDirection:'column',gap:5}},
-        row(ja?'担当':'Owner', owner),
-        row(ja?'予定':'Plan', this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)),
-        row(ja?'実績':'Actual', actual),
-        row(ja?'進捗':'Progress', Math.round(d.prog*100)+'%', sc),
-        row(ja?'工数':'Effort', d.pd+(ja?' 人日':' pd')),
-        row(ja?'状態':'Status', statusLabel, sc)));
+      e('div',{style:{display:'flex',flexDirection:'column',gap:5}}, body));
   }
 
   // ---------- toolbar ----------
@@ -721,6 +746,12 @@ class Component extends DCLogic {
         e('span',{onClick:()=>this.setState(s=>({autoSave:!s.autoSave}),()=>this.maybeAutosave()),
           style:{width:32,height:18,borderRadius:9,background:st.autoSave?T.blue:T.gridStrong,position:'relative',display:'inline-block',transition:'background .15s'}},
           e('span',{style:{position:'absolute',left:st.autoSave?16:2,top:2,width:14,height:14,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 2px rgba(0,0,0,.25)',transition:'left .15s'}}))),
+      e('label',{title:L.extChanged, style:{display:'inline-flex',alignItems:'center',gap:7,fontSize:12,fontWeight:600,color:T.dim,cursor:'pointer',userSelect:'none'}},
+        L.autoReload,
+        e('span',{onClick:()=>this.setState(s=>({autoReload:!s.autoReload})),
+          style:{width:32,height:18,borderRadius:9,background:st.autoReload?T.blue:T.gridStrong,position:'relative',display:'inline-block',transition:'background .15s'}},
+          e('span',{style:{position:'absolute',left:st.autoReload?16:2,top:2,width:14,height:14,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 2px rgba(0,0,0,.25)',transition:'left .15s'}}))),
+      st.extChanged&&btn(L.reloadNow, ()=>this.forceReload(), {accent:true, title:L.extChanged}),
       e('span',{style:{fontSize:10.5,color:T.faint,fontWeight:600}}, st.dirty? '● '+L.unsaved : L.savedOk),
       e('div',{style:{width:1,height:22,background:T.gridStrong}}),
       btn('↶', ()=>this.undo(), {square:true, disabled:!this.past.length, title:'Ctrl+Z'}),
@@ -1210,6 +1241,10 @@ class Component extends DCLogic {
         kids.push(e('div',{key:'nm',style:{position:'absolute',left:rightX,top:0,height:rowH,display:'flex',alignItems:'center',fontSize:11,fontWeight:isProj?700:600,color:isProj?T.text:T.dim,whiteSpace:'nowrap',pointerEvents:'none'}}, nm));
       }
     }
+    // hover tooltip（集計行にも期間・日数を出す）
+    const tipData={ name: st.lang==='ja'?r.node.ja:r.node.en, ps:a.ps, pe:a.pe, prog:a.prog, pd:a.pd, group:true };
+    kids.push(e('div',{key:'hit', onMouseEnter:ev=>this.showTip(ev,tipData), onMouseLeave:()=>this.hideTip(),
+      style:{position:'absolute',left:x1,top:(rowH-16)/2,width:w,height:16,zIndex:4}}));
     return kids;
   }
 

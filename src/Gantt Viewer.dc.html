@@ -93,7 +93,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.6.0 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.6.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -705,31 +705,10 @@ class Component extends DCLogic {
         style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'6px 11px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',display:'inline-flex',alignItems:'center',gap:6,flex:'0 0 auto',whiteSpace:'nowrap'}},
         e('span',{style:{width:7,height:7,borderRadius:'50%',background:T.today,flex:'0 0 auto'}}), e('span',{style:{whiteSpace:'nowrap'}}, L.jumpToday)),
 
-      e('div',{style:{display:'flex',alignItems:'center',gap:8,flex:'0 0 auto'}},
-        e('span',{style:{fontSize:11,fontWeight:600,color:T.faint,whiteSpace:'nowrap'}}, L.design),
-        e('div',{style:{display:'inline-flex',gap:5}},
-          ['A','B','C'].map(v=>{ const th=this.STRUCT[v]; const on=st.variant===v;
-            return e('button',{key:v+'|'+on, onClick:()=>this.setState({variant:v}), title:v+' · '+th.nm[st.lang],
-              style:{border:'1px solid '+(on?T.blue:T.gridStrong),cursor:'pointer',padding:'5px 9px',borderRadius:8,fontFamily:'inherit',
-                background:on?this.hex(T.blue,T.dark?.16:.09):T.panel,color:on?T.blue:T.dim,display:'flex',alignItems:'center',gap:6,transition:'all .15s',whiteSpace:'nowrap'}},
-              e('span',{style:{fontSize:11,fontWeight:700}}, v),
-              on&&e('span',{style:{fontSize:12,fontWeight:600}}, th.nm[st.lang])); })),
-        e('div',{style:{position:'relative'},'data-menu':true},
-          e('button',{onClick:()=>this.setState(s=>({openMenu:s.openMenu==='palette'?null:'palette'})),'data-menu':true,
-            title: st.lang==='ja'?'配色':'Palette',
-            style:{border:'1px solid '+(st.openMenu==='palette'?T.blue:T.gridStrong),cursor:'pointer',padding:'5px 10px',borderRadius:8,fontFamily:'inherit',
-              background:st.openMenu==='palette'?this.hex(T.blue,T.dark?.16:.09):T.panel,color:st.openMenu==='palette'?T.blue:T.dim,display:'flex',alignItems:'center',gap:7,whiteSpace:'nowrap',transition:'all .15s'}},
-            e('span',{style:{width:13,height:13,borderRadius:'50%',background:T.blue,flex:'0 0 auto',boxShadow:'0 0 0 2px '+this.hex(T.blue,.22)}}),
-            e('span',{style:{fontSize:12,fontWeight:600}}, this.PALETTES[st.palette].nm[st.lang])),
-          st.openMenu==='palette'&&this.renderPaletteMenu())),
-
-      e('div',{style:{width:1,height:26,background:T.gridStrong}}),
-      this.seg([{k:'ja',label:'日本語'},{k:'en',label:'EN'}], st.lang, l=>this.setState({lang:l}), T),
-      e('button',{onClick:()=>this.resetPrefs(), title:L.resetPrefs, 'aria-label':L.resetPrefs,
-        style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.faint,cursor:'pointer',width:30,height:30,borderRadius:8,display:'inline-flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto',padding:0,transition:'all .15s'},
-        onMouseEnter:ev=>{ev.currentTarget.style.color=T.dim; ev.currentTarget.style.borderColor=T.dim;}, onMouseLeave:ev=>{ev.currentTarget.style.color=T.faint; ev.currentTarget.style.borderColor=T.gridStrong;}},
-        e('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
-          e('path',{d:'M3 12a9 9 0 1 0 3-6.7L3 8'}), e('path',{d:'M3 3v5h5'}))),
+      // デザイン・配色・言語・リセットを1つのメニューに集約（ヘッダー幅の圧縮）
+      e('div',{style:{position:'relative'},'data-menu':true},
+        iconBtn('⚙ '+L.design, st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'}))),
+        st.openMenu==='design'&&this.renderDesignMenu()),
     );
   }
 
@@ -824,20 +803,39 @@ class Component extends DCLogic {
         onMouseEnter:ev=>ev.currentTarget.style.background=T.hover, onMouseLeave:ev=>ev.currentTarget.style.background='transparent'}, L.showAll));
   }
   densIcon(gap){ const e=React.createElement; const ys=[6-gap,6,6+gap]; return e('svg',{width:15,height:13,viewBox:'0 0 15 13',style:{display:'block'}}, ys.map((y,i)=>e('rect',{key:i,x:1.5,y:y-0.8,width:12,height:1.7,rx:.85,fill:'currentColor'}))); }
-  renderPaletteMenu(){
-    const e=React.createElement, T=this.T, ja=this.state.lang==='ja';
+  renderDesignMenu(){
+    const e=React.createElement, T=this.T, L=this.L, st=this.state, ja=st.lang==='ja';
     const pals=this.PALETTES;
-    return e('div',{style:{...this.menuStyle(T,206),left:'auto',right:0}},
-      e('div',{style:this.menuTitle(T)}, ja?'配色':'Palette'),
-      Object.keys(pals).map(k=>{ const p=pals[k], on=this.state.palette===k;
-        return e('button',{key:k+'|'+on, onClick:()=>this.setState({palette:k, openMenu:null}),
-          style:{display:'flex',alignItems:'center',gap:11,width:'100%',border:'none',background:on?T.hover:'transparent',cursor:'pointer',padding:'8px 8px',borderRadius:7,fontFamily:'inherit',color:T.text,textAlign:'left'},
-          onMouseEnter:ev=>{ if(!on) ev.currentTarget.style.background=T.hover; }, onMouseLeave:ev=>{ if(!on) ev.currentTarget.style.background='transparent'; }},
-          e('span',{style:{display:'flex',gap:3,flex:'0 0 auto'}},
-            e('span',{style:{width:15,height:15,borderRadius:'50%',background:p.sw,boxShadow:'0 0 0 2px '+this.hex(p.sw,.22)}}),
-            e('span',{style:{width:8,height:15,borderRadius:'0 3px 3px 0',background:this.hex(p.ina,.9),marginLeft:-4}})),
-          e('span',{style:{fontSize:12.5,fontWeight:on?700:500,flex:1}}, p.nm[ja?'ja':'en']),
-          on&&e('span',{style:{color:T.blue,fontWeight:700,fontSize:13}}, '✓')); }));
+    const sect=label=>e('div',{style:{...this.menuTitle(T),paddingTop:10}}, label);
+    return e('div',{style:{...this.menuStyle(T,232),left:'auto',right:0}},
+      e('div',{style:this.menuTitle(T)}, L.design),
+      e('div',{style:{display:'flex',gap:5,padding:'0 8px 2px'}},
+        ['A','B','C'].map(v=>{ const th=this.STRUCT[v]; const on=st.variant===v;
+          return e('button',{key:v+'|'+on, onClick:()=>this.setState({variant:v}), title:v+' · '+th.nm[st.lang],
+            style:{flex:1,minWidth:0,border:'1px solid '+(on?T.blue:T.gridStrong),cursor:'pointer',padding:'6px 4px',borderRadius:8,fontFamily:'inherit',
+              background:on?this.hex(T.blue,T.dark?.16:.09):T.panel,color:on?T.blue:T.dim,display:'flex',alignItems:'center',justifyContent:'center',gap:5,transition:'all .15s',whiteSpace:'nowrap',overflow:'hidden'}},
+            e('span',{style:{fontSize:11,fontWeight:700}}, v),
+            on&&e('span',{style:{fontSize:11,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis'}}, th.nm[st.lang])); })),
+      sect(ja?'配色':'Palette'),
+      e('div',{style:{maxHeight:236,overflowY:'auto'}},
+        Object.keys(pals).map(k=>{ const p=pals[k], on=st.palette===k;
+          return e('button',{key:k+'|'+on, onClick:()=>this.setState({palette:k}),
+            style:{display:'flex',alignItems:'center',gap:11,width:'100%',border:'none',background:on?T.hover:'transparent',cursor:'pointer',padding:'8px 8px',borderRadius:7,fontFamily:'inherit',color:T.text,textAlign:'left'},
+            onMouseEnter:ev=>{ if(!on) ev.currentTarget.style.background=T.hover; }, onMouseLeave:ev=>{ if(!on) ev.currentTarget.style.background='transparent'; }},
+            e('span',{style:{display:'flex',gap:3,flex:'0 0 auto'}},
+              e('span',{style:{width:15,height:15,borderRadius:'50%',background:p.sw,boxShadow:'0 0 0 2px '+this.hex(p.sw,.22)}}),
+              e('span',{style:{width:8,height:15,borderRadius:'0 3px 3px 0',background:this.hex(p.ina,.9),marginLeft:-4}})),
+            e('span',{style:{fontSize:12.5,fontWeight:on?700:500,flex:1}}, p.nm[ja?'ja':'en']),
+            on&&e('span',{style:{color:T.blue,fontWeight:700,fontSize:13}}, '✓')); })),
+      sect(ja?'言語':'Language'),
+      e('div',{style:{padding:'0 8px 4px'}}, this.seg([{k:'ja',label:'日本語'},{k:'en',label:'EN'}], st.lang, l=>this.setState({lang:l}), T)),
+      e('div',{style:{height:1,background:T.grid,margin:'8px 4px 4px'}}),
+      e('button',{onClick:()=>this.resetPrefs(), title:L.resetPrefs,
+        style:{display:'flex',alignItems:'center',justifyContent:'center',gap:7,width:'100%',border:'none',background:'transparent',cursor:'pointer',padding:'8px 8px',borderRadius:7,fontFamily:'inherit',color:T.dim,fontSize:12,fontWeight:600},
+        onMouseEnter:ev=>ev.currentTarget.style.background=T.hover, onMouseLeave:ev=>ev.currentTarget.style.background='transparent'},
+        e('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+          e('path',{d:'M3 12a9 9 0 1 0 3-6.7L3 8'}), e('path',{d:'M3 3v5h5'})),
+        L.resetPrefs));
   }
   menuStyle(T,w){ return {position:'absolute',top:'calc(100% + 8px)',left:0,width:w,background:T.panel,border:'1px solid '+T.gridStrong,borderRadius:12,padding:8,zIndex:200,boxShadow: T.dark?'0 12px 40px rgba(0,0,0,.5)':'0 12px 40px rgba(20,28,44,.16)'}; }
   menuTitle(T){ return {fontSize:10.5,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:T.faint,padding:'4px 8px 8px'}; }

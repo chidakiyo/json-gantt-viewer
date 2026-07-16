@@ -89,7 +89,7 @@ class Component extends DCLogic {
   componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.3.1 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.3.2 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -259,10 +259,11 @@ class Component extends DCLogic {
     Object.keys(a).forEach(k=>{ const v=a[k]||{}; asg[k]={ja:v.ja||k, en:v.en||v.ja||k, c:v.color||v.c||this.autoColor(k), abbr:v.abbr}; });
     const normNode=(t)=>{ const pl=t.plan||{}, ac=t.actual||{};
       const kids=(t.children||t.tasks||[]).map(normNode);
+      const ae=(ac.end!==undefined?ac.end:t.ae)||null; // actual.end があれば完了 → progress を 1 に補正（整合規則）
       return {
         id:String(t.id!=null?t.id:this.genId()), ja:t.ja||t.en||'', en:t.en||t.ja||'', who:t.who||null,
-        ps:pl.start||t.ps||null, pe:pl.end||t.pe||null, as:(ac.start!==undefined?ac.start:t.as)||null, ae:(ac.end!==undefined?ac.end:t.ae)||null,
-        prog: this.clampProg(typeof t.progress==='number'?t.progress:(typeof t.prog==='number'?t.prog:0)), pd:Math.max(0,t.personDays||t.pd||0),
+        ps:pl.start||t.ps||null, pe:pl.end||t.pe||null, as:(ac.start!==undefined?ac.start:t.as)||null, ae,
+        prog: ae?1:this.clampProg(typeof t.progress==='number'?t.progress:(typeof t.prog==='number'?t.prog:0)), pd:Math.max(0,t.personDays||t.pd||0),
         crit:!!(t.critical||t.crit), deps:(t.deps||[]).map(String), note:t.note||'', children:kids }; };
     const projects=(j.projects||[]).map(p=>({ id:String(p.id!=null?p.id:this.genId()), ja:p.ja||p.en||'', en:p.en||p.ja||'', accent:!!p.accent,
       milestones:(p.milestones||[]).map(m=>({date:m.date, ja:m.ja||m.en||'', en:m.en||m.ja||'', rose:!!m.rose})),
@@ -275,7 +276,7 @@ class Component extends DCLogic {
   serializeDoc(){
     const D=this.curDoc();
     const wnode=(n)=>{ const o={id:n.id, ja:n.ja, en:n.en};
-      if(n.children && n.children.length){ if(n.note) o.note=n.note; o.children=n.children.map(wnode); return o; }
+      if(n.children && n.children.length){ if(n.who) o.who=n.who; if(n.crit) o.critical=true; if(n.deps&&n.deps.length) o.deps=n.deps.slice(); if(n.note) o.note=n.note; o.children=n.children.map(wnode); return o; }
       if(n.who) o.who=n.who;
       o.plan={start:n.ps||null, end:n.pe||null}; o.actual={start:n.as||null, end:n.ae||null};
       o.progress=n.prog||0; o.personDays=n.pd||0;
@@ -322,7 +323,7 @@ class Component extends DCLogic {
     if(this.state.sel===id) this.setState({sel:null}); }
   moveNode(id,dir){ this.mutate(d=>{ const r=this.findNode(d,id); if(!r) return; const j=r.idx+dir; if(j<0||j>=r.arr.length) return; const [n]=r.arr.splice(r.idx,1); r.arr.splice(j,0,n); }); }
   indent(id){ this.mutate(d=>{ const r=this.findNode(d,id); if(!r||r.idx===0) return; const prev=r.arr[r.idx-1]; if(this.isDescId(r.node,prev.id)) return; r.arr.splice(r.idx,1); prev.children=prev.children||[]; prev.children.push(r.node); }); }
-  outdent(id){ this.mutate(d=>{ const r=this.findNode(d,id); if(!r||!r.parent) return; const pr=this.findNode(d,r.parent.id); if(!pr) return; r.arr.splice(r.idx,1); pr.arr.splice(pr.idx+1,0,r.node); }); }
+  outdent(id){ this.mutate(d=>{ const r=this.findNode(d,id); if(!r||!r.parent) return; const pr=this.findNode(d,r.parent.id); if(!pr||pr.parent===null) return; /* 深さ1はトップレベル化させない（プロジェクト行扱いになり plan 等が保存で失われるため） */ r.arr.splice(r.idx,1); pr.arr.splice(pr.idx+1,0,r.node); }); }
   addAssignee(){ const nm=window.prompt(this.state.lang==='ja'?'担当者名':'Member name'); if(!nm) return null;
     const key=nm.trim(); this.mutate(d=>{ d.assignees=d.assignees||{}; if(!d.assignees[key]) d.assignees[key]={ja:key,en:key,c:this.autoColor(key)}; }); return key; }
 
@@ -453,7 +454,7 @@ class Component extends DCLogic {
   statusOf(t){
     const today=this.TODAY, ps=this.pd(t.ps), pe=this.pd(t.pe);
     if(!ps||!pe) return 'future';
-    if(t.prog>=1) return 'done';
+    if(t.prog>=1 || t.ae) return 'done'; // actual.end 記入済みは完了扱い（progress の記入漏れに寛容に）
     if(today>pe) return 'delay';
     if(t.prog===0 && today>ps) return 'risk';
     const frac=Math.max(0,Math.min(1,this.dd(ps,pe)? this.dd(ps,today)/this.dd(ps,pe):0));
@@ -1259,14 +1260,16 @@ class Component extends DCLogic {
     }
     let ina=null;
     if(st.layers.inazuma){
-      const leaves=rows.map((r,i)=>({r,i})).filter(o=>o.r.kind==='task');
+      const leaves=rows.map((r,i)=>({r,i})).filter(o=>o.r.kind==='task' || (st.collapsed[o.r.id] && o.r.agg && o.r.agg.ps && o.r.agg.pe)); // 折りたたみ中のグループは集計値で1点打つ（配下タスクの遅延情報を落とさない）
       if(leaves.length){
         const todayX=this.dateToX(this.TODAY,g);
         const pts=[[todayX, 0]];
-        leaves.forEach(o=>{ const t=o.r.node, ps=this.pd(t.ps),pe=this.pd(t.pe); if(!ps||!pe){ return; }
-          let ax = this.dateToX(this.addD(ps, Math.round(this.dd(ps,pe)*t.prog)),g)+g.px*t.prog;
-          if(t.prog>=1) ax=Math.max(ax,todayX);      // 完了済み: 予定終了が過去でも左凸（遅延表現）にしない
-          else if(t.prog<=0) ax=Math.min(ax,todayX); // 未着手: 予定開始が未来でも右凸（前倒し表現）にしない
+        leaves.forEach(o=>{ const isTask=o.r.kind==='task'; const t=o.r.node;
+          const ps=isTask? this.pd(t.ps):o.r.agg.ps, pe=isTask? this.pd(t.pe):o.r.agg.pe, prog=isTask? t.prog:o.r.agg.prog;
+          if(!ps||!pe){ return; }
+          let ax = this.dateToX(this.addD(ps, Math.round(this.dd(ps,pe)*prog)),g)+g.px*prog;
+          if(prog>=1) ax=Math.max(ax,todayX);      // 完了済み: 予定終了が過去でも左凸（遅延表現）にしない
+          else if(prog<=0) ax=Math.min(ax,todayX); // 未着手: 予定開始が未来でも右凸（前倒し表現）にしない
           pts.push([ax, o.i*rowH+rowH/2]); });
         pts.push([todayX, rowsH]);
         const dstr=this.roundPath(pts,7);

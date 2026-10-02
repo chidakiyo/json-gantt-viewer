@@ -25,6 +25,9 @@ JSON ファイル
 ### データ取り込み
 - `normalizeDoc(json)` — 生 JSON を内部モデルへ正規化。旧形式（`ps/pe` 直書き）とも後方互換。
 - `openFile(ev)` / `resetDoc()` — ファイル読込・サンプルへ戻す。
+- `reloadOrPick()` — ツールバー ⟳。ハンドルがあれば `forceReload()`、無ければファイル選択を出し直す。
+- `rememberHandle(h)` / `recallHandle()` / `openLast()` — 開いた `FileSystemFileHandle` を IndexedDB（`jsonGanttViewer`/`kv`/`lastFile`）に記憶。起動時、許可済みなら自動で開き、未許可なら「前回: …」ボタンで開く。
+- `loadView(name)` / `saveView()` / `syncView()` — ファイル名ごとの折りたたみ・非表示PJ・階層レベルを localStorage（`jsonGanttViewer.view.v1`、直近30件）に保持し、読込時に復元。
 - getter `DATA` / `ASSIGNEES` / `META` / `CAL` — `state.doc` があればそれ、無ければ内蔵デフォルト。
 
 ### 時間軸ジオメトリ
@@ -75,6 +78,8 @@ JSON ファイル
 | `barLabels` | バー注記 on/off（dates, name, owner） |
 | `sel` / `hover` / `tip` | 選択行 / ホバー行 / ホバーカード |
 | `doc` / `fileName` | 読込済みデータ / ファイル名 |
+| `lastFile` | 前回開いたファイル `{name}`（IndexedDB に記憶したハンドル） |
+| `nameAdd` | タスク名列の幅の増減 px（見出し右端ドラッグ／ダブルクリックで自動フィット。prefs に保存） |
 
 ## 拡張の勘所（Claude Code 向け）
 

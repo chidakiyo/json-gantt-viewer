@@ -45,6 +45,7 @@ class Component extends DCLogic {
       outLv: 3,
       mode: saved.mode || 'week',
       zoom: saved.zoom || 1,
+      nameAdd: saved.nameAdd || 0, // タスク名列の幅の増減(px)。見出し右端のドラッグで変更
       collapsed: {},
       openMenu: null,
       layers: Object.assign({ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true }, saved.layers),
@@ -62,6 +63,7 @@ class Component extends DCLogic {
       hover: null, sel: null, tip: null,
       hiddenP: {},   // 非表示プロジェクト {id:true}（表示状態。保存されない）
       doc: null, fileName: null,
+      lastFile: null, // 前回開いたファイル {name}（IndexedDB に記憶したハンドル）
       booted: false,
     };
   }
@@ -83,17 +85,22 @@ class Component extends DCLogic {
     });
     this._bootT = setTimeout(() => this.setState({ booted: true }), 520);
     this._pollT = setInterval(() => this.pollFile(), 1500); // 外部変更のポーリング（File System Access API で開いた場合のみ動く）
+    this.recallHandle();
   }
   componentWillUnmount(){ document.removeEventListener('mousedown', this._closeMenu); document.removeEventListener('keydown', this._keys); clearTimeout(this._bootT); clearTimeout(this._asT); clearInterval(this._pollT); }
 
   // ---------- preferences ----------
   get PREF_KEY(){ return 'jsonGanttViewer.prefs.v1'; }
   loadPrefs(){ try{ const s=localStorage.getItem(this.PREF_KEY); return s? JSON.parse(s):{}; }catch(e){ return {}; } }
-  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, autoReload:st.autoReload, zoom:st.zoom })); }catch(e){} }
-  componentDidUpdate(pp, ps){ try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs(); }catch(e){ this.savePrefs(); } }
+  savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, autoReload:st.autoReload, zoom:st.zoom, nameAdd:st.nameAdd })); }catch(e){} }
+  componentDidUpdate(pp, ps){ this.syncView(); try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom','nameAdd']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs();
+ }catch(e){ this.savePrefs(); } }
+  // 表示状態の変化を自前で検知して保存（ランタイムは componentDidUpdate に前回 state を渡さないことがあるため）
+  syncView(){ const st=this.state, k=[st.collapsed,st.hiddenP,st.outLv,st.fileName], p=this._viewSnap;
+    if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.6.2 · 2026-07-16'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.7.0 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -340,7 +347,9 @@ class Component extends DCLogic {
       { const seen=new Set(), dups=new Set(); const recId=n=>{ if(seen.has(n.id)) dups.add(n.id); seen.add(n.id); (n.children||[]).forEach(recId); }; doc.projects.forEach(recId);
         if(dups.size) window.alert((this.state.lang==='ja'?'警告: id が重複しています。deps の矢印や編集操作が誤動作する可能性があります:\n':'Warning: duplicate ids — dependency arrows and editing may misbehave:\n')+[...dups].join(', ')); }
       this.fileHandle=handle||null; this._mtime=null; this.past=[]; this.future=[];
-      this.setState({doc, fileName:name||null, dirty:false, extChanged:false, collapsed:{}, hiddenP:{}, outLv:3, sel:null}, ()=>{ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollLeft=Math.max(0,this.dateToX(this.TODAY,g)-340); });
+      if(handle) this.rememberHandle(handle);
+      const v=this.loadView(name); // 前回このファイルで開いていた折りたたみ・非表示状態を復元
+      this.setState({doc, fileName:name||null, dirty:false, extChanged:false, collapsed:(v&&v.collapsed)||{}, hiddenP:(v&&v.hiddenP)||{}, outLv:(v&&v.outLv!=null)?v.outLv:3, sel:null}, ()=>{ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollLeft=Math.max(0,this.dateToX(this.TODAY,g)-340); });
     }catch(e){ window.alert((this.state.lang==='ja'?'JSONの読み込みに失敗しました:\n':'Failed to load JSON:\n')+e.message); } }
   async openPicker(){ if(window.showOpenFilePicker){ try{ const [h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]}); const f=await h.getFile(); this.loadJsonText(await f.text(), f.name, h); }catch(e){} }
     else if(this.fileRef.current) this.fileRef.current.click(); }
@@ -351,7 +360,7 @@ class Component extends DCLogic {
   async save(){ const txt=JSON.stringify(this.serializeDoc(),null,2);
     if(this.fileHandle){ try{ const w=await this.fileHandle.createWritable(); await w.write(txt); await w.close(); try{ this._mtime=(await this.fileHandle.getFile()).lastModified; }catch(e){} this.setState({dirty:false, extChanged:false}); return; }catch(e){} }
     if(window.showSaveFilePicker){ try{ const h=await window.showSaveFilePicker({suggestedName:this.state.fileName||'gantt.json', types:[{description:'JSON',accept:{'application/json':['.json']}}]});
-        this.fileHandle=h; const w=await h.createWritable(); await w.write(txt); await w.close(); try{ this._mtime=(await h.getFile()).lastModified; }catch(e){} this.setState({dirty:false, extChanged:false, fileName:h.name||this.state.fileName||'gantt.json'}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+        this.fileHandle=h; this.rememberHandle(h); const w=await h.createWritable(); await w.write(txt); await w.close(); try{ this._mtime=(await h.getFile()).lastModified; }catch(e){} this.setState({dirty:false, extChanged:false, fileName:h.name||this.state.fileName||'gantt.json'}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
     const b=new Blob([txt],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=this.state.fileName||'gantt.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(u),3000); this.setState({dirty:false}); }
   maybeAutosave(){ if(this.state.autoSave && this.fileHandle){ clearTimeout(this._asT); this._asT=setTimeout(()=>this.save(),700); } }
   // ---------- auto reload（外部変更の追従） ----------
@@ -367,6 +376,33 @@ class Component extends DCLogic {
       return true; }catch(e){ return false; } }
   async forceReload(){ if(!this.fileHandle) return; if(this.state.dirty && !window.confirm(this.L.confirmReload)) return;
     try{ const f=await this.fileHandle.getFile(); this._mtime=f.lastModified; this.reloadText(await f.text()); }catch(e){} }
+  // ツールバーの ⟳: ハンドルがあれば即再読込、無ければ（input 経由で開いた等）ファイル選択を出し直す
+  reloadOrPick(){ if(this.fileHandle) this.forceReload(); else { if(this.state.dirty && !window.confirm(this.L.confirmReload)) return; this.openPicker(); } }
+  // ---------- 前回ファイルの記憶（FileSystemFileHandle を IndexedDB に保存。ブラウザ再読込後もワンクリックで開き直せる） ----------
+  idb(mode,fn){ return new Promise((res,rej)=>{ if(!window.indexedDB) return rej(new Error('no idb'));
+    const rq=indexedDB.open('jsonGanttViewer',1); rq.onupgradeneeded=()=>rq.result.createObjectStore('kv'); rq.onerror=()=>rej(rq.error);
+    rq.onsuccess=()=>{ const db=rq.result; const tx=db.transaction('kv',mode); const r=fn(tx.objectStore('kv'));
+      tx.oncomplete=()=>{ db.close(); res(r&&r.result); }; tx.onerror=()=>{ db.close(); rej(tx.error); }; }; }); }
+  rememberHandle(h){ this._lastHandle=h||null; this.setState({lastFile:h?{name:h.name}:null}); this.idb('readwrite',os=>h? os.put(h,'lastFile') : os.delete('lastFile')).catch(()=>{}); }
+  async recallHandle(){ let h; try{ h=await this.idb('readonly',os=>os.get('lastFile')); }catch(e){ return; }
+    if(!h || h.kind!=='file' || this.state.doc) return;
+    this._lastHandle=h; this.setState({lastFile:{name:h.name}});
+    // 「サイトの閲覧中は常に許可」済みなら操作なしで自動で開く。未許可ならボタン押下（ユーザー操作）で許可を求める
+    try{ if(h.queryPermission && await h.queryPermission({mode:'readwrite'})==='granted') this.openLast(); }catch(e){} }
+  async openLast(){ const h=this._lastHandle; if(!h) return;
+    try{ let p=h.queryPermission? await h.queryPermission({mode:'readwrite'}) : 'granted';
+      if(p!=='granted' && h.requestPermission) p=await h.requestPermission({mode:'readwrite'});
+      if(p!=='granted') return;
+      const f=await h.getFile(); this.loadJsonText(await f.text(), f.name, h); }
+    catch(e){ window.alert(this.state.lang==='ja'?'前回のファイルを開けませんでした（移動・削除された可能性があります）':'Could not open the last file (it may have been moved or deleted)'); this.rememberHandle(null); } }
+  // ---------- ファイルごとの表示状態（折りたたみ・非表示PJ・階層レベル）を localStorage に保持 ----------
+  get VIEW_KEY(){ return 'jsonGanttViewer.view.v1'; }
+  loadView(name){ if(!name) return null; try{ const all=JSON.parse(localStorage.getItem(this.VIEW_KEY)||'{}'); return all['f:'+name]||null; }catch(e){ return null; } }
+  saveView(){ const st=this.state; if(!st.doc || !st.fileName) return;
+    try{ const all=JSON.parse(localStorage.getItem(this.VIEW_KEY)||'{}');
+      all['f:'+st.fileName]={collapsed:st.collapsed, hiddenP:st.hiddenP, outLv:st.outLv, t:Date.now()};
+      Object.keys(all).sort((a,b)=>(all[b].t||0)-(all[a].t||0)).slice(30).forEach(k=>delete all[k]); // 直近30ファイル分だけ保持
+      localStorage.setItem(this.VIEW_KEY, JSON.stringify(all)); }catch(e){} }
   newDoc(){ if(this.state.dirty && !window.confirm(this.L.confirmNew)) return;
     const t=this.TODAY; const doc={ meta:{ja:{title:'新規プロジェクト',subtitle:''},en:{title:'New project',subtitle:''}}, calendar:{workweek:[1,2,3,4,5],holidays:{},extra:{}}, assignees:{},
       projects:[{ id:this.genId(), ja:this.state.lang==='ja'?'新規プロジェクト':'New project', en:'New project', accent:true, milestones:[], children:[ this.newTaskNode() ] }] };
@@ -375,7 +411,7 @@ class Component extends DCLogic {
   resetDoc(){ this.fileHandle=null; this.past=[]; this.future=[]; this.setState({doc:null, fileName:null, dirty:false, collapsed:{}, hiddenP:{}, outLv:3, sel:null}); }
   resetPrefs(){ try{ localStorage.removeItem(this.PREF_KEY); }catch(e){}
     this.setState({ lang:'ja', variant:'A', density:'default', palette:'ocean', mode:'week', outLv:3, autoSave:false, autoReload:true,
-      zoom:1,
+      zoom:1, nameAdd:0,
       layers:{ plan:true, progress:true, milestones:true, deps:true, critical:true, inazuma:true, today:true, weekend:true, holidays:true, grid:true },
       cols:{ assignee:true, workload:true, duration:true, progress:true },
       barLabels:{ dates:false, name:false, owner:false }, openMenu:null }); }
@@ -538,7 +574,20 @@ class Component extends DCLogic {
     {key:'ae', w:112, label:this.L.aeL, align:'center'},
   ]; }
   visCols(){ return this.state.edit? this.editCols() : this.colDefs().filter(c=>this.state.cols[c.key]); }
-  nameW(){ const base=this.state.variant==='B'?250:270; return this.state.edit? base+66 : base; }
+  nameBase(){ return this.state.variant==='B'?250:270; }
+  nameW(){ const w=Math.max(160, this.nameBase()+(this.state.nameAdd||0)); return this.state.edit? w+66 : w; }
+  // タスク名列の幅変更（見出し右端のハンドル）。ドラッグで増減、ダブルクリックで表示中の最長名に合わせる
+  nameResizeDown(ev){ ev.preventDefault(); ev.stopPropagation(); const x0=ev.clientX, a0=this.state.nameAdd||0, base=this.nameBase();
+    const mv=e2=>{ const a=Math.round(Math.max(160-base, Math.min(900-base, a0+e2.clientX-x0))); if(a!==this.state.nameAdd) this.setState({nameAdd:a}); };
+    const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); document.body.style.cursor=''; };
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); document.body.style.cursor='col-resize'; }
+  fitNameW(){ const st=this.state, ja=st.lang==='ja';
+    const cv=this._measureCv||(this._measureCv=document.createElement('canvas')); const ctx=cv.getContext('2d'); let need=0;
+    this.buildRows().forEach(r=>{ const isProj=r.kind==='project', isTask=r.kind==='task';
+      ctx.font=(isProj?700:(r.kind==='group'?600:500))+' '+(isProj?13.5:12.5)+"px Inter, 'Noto Sans JP', system-ui, sans-serif";
+      const w=8+r.depth*15+16+6+(isProj?14:0)+ctx.measureText((ja?r.node.ja:r.node.en)||'').width+(isTask&&r.node.crit&&st.layers.critical?28:0)+14;
+      if(w>need) need=w; });
+    const base=this.nameBase(); this.setState({nameAdd:Math.round(Math.max(160-base, Math.min(900-base, need-base)))}); }
   leftW(){ return this.nameW() + this.visCols().reduce((a,c)=>a+c.w,0); }
   rh(){ const b=this.T.rowH; const m={compact:0.72, default:1, spacious:1.32}[this.state.density]||1; const r=Math.round(b*m); return this.state.edit? Math.max(r,34):r; }
   bh(){ return Math.round(this.rh()*0.5); }
@@ -656,6 +705,12 @@ class Component extends DCLogic {
         st.fileName
           ? e('span',{title:st.fileName, style:{fontSize:11.5,color:T.dim,fontWeight:600,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontFamily:"'JetBrains Mono',monospace"}}, st.fileName)
           : e('span',{style:{fontSize:11,color:T.faint,whiteSpace:'nowrap'}}, st.doc?(st.lang==='ja'?'未保存のプラン':'unsaved plan'):(st.lang==='ja'?'サンプル表示中':'sample data')),
+        st.doc && st.fileName && e('button',{onClick:()=>this.reloadOrPick(),
+          title: this.fileHandle? (st.lang==='ja'?'ファイルを再読み込み（折りたたみ状態は維持）':'Reload file (keeps collapsed state)') : (st.lang==='ja'?'ファイルを選び直して再読み込み（このブラウザでは直接再読込できません）':'Re-pick file to reload (direct reload not supported in this browser)'),
+          style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'5px 9px',borderRadius:8,fontSize:13,fontWeight:700,fontFamily:'inherit',lineHeight:1}}, '⟳'),
+        !this.fileHandle && st.lastFile && e('button',{onClick:()=>this.openLast(), title:(st.lang==='ja'?'前回のファイルを開く: ':'Open last file: ')+st.lastFile.name,
+          style:{border:'1px dashed '+this.hex(T.blue,.6),background:'transparent',color:T.blue,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis'}},
+          '↺ '+(st.lang==='ja'?'前回: ':'Last: ')+st.lastFile.name),
         st.doc && e('button',{onClick:()=>this.resetDoc(), title:st.lang==='ja'?'サンプルに戻す':'Reset to sample',
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap'}}, st.lang==='ja'?'サンプル':'Sample')),
 
@@ -875,7 +930,12 @@ class Component extends DCLogic {
     const todayX=this.dateToX(this.TODAY,g);
     return e('div',{style:{position:'sticky',top:0,zIndex:40,display:'flex',height:T.headerH,background:T.headerBg,borderBottom:'1.5px solid '+T.gridStrong,boxShadow:T.dark?'0 2px 8px rgba(0,0,0,.3)':'0 2px 5px rgba(20,28,44,.05)'}},
       e('div',{style:{position:'sticky',left:0,zIndex:2,width:leftW,flex:'0 0 auto',display:'flex',alignItems:'flex-end',background:T.headerBg,borderRight:'1.5px solid '+T.gridStrong}},
-        e('div',{style:{width:this.nameW(),padding:'0 14px 9px',fontSize:11,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:T.faint}}, L.task),
+        e('div',{style:{position:'relative',alignSelf:'stretch',display:'flex',alignItems:'flex-end',width:this.nameW(),padding:'0 14px 9px',fontSize:11,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:T.faint}}, L.task,
+          e('div',{onMouseDown:ev=>this.nameResizeDown(ev), onDoubleClick:()=>this.fitNameW(),
+            title:this.state.lang==='ja'?'ドラッグで列幅を変更 / ダブルクリックで名前に合わせる':'Drag to resize / double-click to fit names',
+            onMouseEnter:ev=>{ ev.currentTarget.firstChild.style.background=T.blue; }, onMouseLeave:ev=>{ ev.currentTarget.firstChild.style.background='transparent'; },
+            style:{position:'absolute',right:-4,top:0,bottom:0,width:9,cursor:'col-resize',zIndex:3,display:'flex',justifyContent:'center'}},
+            e('div',{style:{width:2,height:'100%',background:'transparent',transition:'background .12s'}}))),
         this.visCols().map(c=>e('div',{key:c.key,style:{width:c.w,padding:'0 8px 9px',fontSize:10.5,fontWeight:700,letterSpacing:'.03em',textTransform:'uppercase',color:T.faint,textAlign:c.align,flex:'0 0 auto',whiteSpace:'nowrap',overflow:'hidden'}}, c.label))),
       e('div',{style:{position:'relative',width:g.w,flex:'0 0 auto'}},
         e('div',{style:{position:'relative',height:t1H,borderBottom:'1px solid '+T.grid}},
@@ -959,7 +1019,7 @@ class Component extends DCLogic {
           isTask? e('span',{style:{width:6,height:6,borderRadius:st.layers.critical&&r.node.crit?'2px':'50%',background: st.layers.critical&&r.node.crit? T.crit : this.statusColor(status,T)}}):null));
     if(isProj) kids.push(e('span',{key:'pj',style:{width:8,height:8,borderRadius:2,background:T.blue,flex:'0 0 auto'}}));
     if(st.edit){
-      kids.push(e('input',{key:'nm|'+r.id+'|'+name, defaultValue:name, onClick:ev=>ev.stopPropagation(),
+      kids.push(e('input',{key:'nm|'+r.id+'|'+name, defaultValue:name, title:name, onClick:ev=>ev.stopPropagation(),
         onBlur:ev=>{ const v=ev.target.value; if(v!==name) this.setField(r.id, ja?'ja':'en', v); },
         onKeyDown:ev=>{ if(ev.key==='Enter') ev.target.blur(); ev.stopPropagation(); },
         style:{flex:1,minWidth:0,border:'1px solid '+(sel?this.hex(T.blue,.5):T.gridStrong),background:T.panel,color:T.text,borderRadius:6,padding:'3px 8px',
@@ -972,7 +1032,7 @@ class Component extends DCLogic {
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.crit,cursor:'pointer',width:20,height:20,borderRadius:5,fontSize:11,lineHeight:1,flex:'0 0 auto',display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0}},'✕'));
       }
     } else {
-      kids.push(e('span',{key:'nm',style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:T.text,
+      kids.push(e('span',{key:'nm',title:name,style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:T.text,
         whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1, letterSpacing:isProj?'-.01em':'0'}}, name));
       if(st.layers.critical&&isTask&&r.node.crit) kids.push(e('span',{key:'cp',title:this.L.critical,style:{fontSize:8.5,fontWeight:700,color:T.crit,border:'1px solid '+this.hex(T.crit,.4),borderRadius:4,padding:'0px 3px',flex:'0 0 auto',lineHeight:'13px'}},'CP'));
     }

@@ -60,7 +60,7 @@ class Component extends DCLogic {
       dirty: false,
       drag: null,      // bar drag preview {id, ps, pe, days, kind}
       rowDrag: null,   // {id, over}
-      hover: null, sel: null, tip: null,
+      hover: null, sel: null, tip: null, hint: null,
       hiddenP: {},   // 非表示プロジェクト {id:true}（表示状態。保存されない）
       doc: null, fileName: null,
       lastFile: null, // 前回開いたファイル {name}（IndexedDB に記憶したハンドル）
@@ -100,7 +100,7 @@ class Component extends DCLogic {
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.7.0 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.7.1 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -545,6 +545,18 @@ class Component extends DCLogic {
   jumpToday(){ const el=this.boardRef.current; const g=this.geo(); if(el) el.scrollTo({left:Math.max(0,this.dateToX(this.TODAY,g)-340), behavior:'smooth'}); }
   showTip(ev,d){ if(this.state.drag||this.state.rowDrag) return; this.setState({tip:{d, x:ev.clientX, y:ev.clientY}}); }
   hideTip(){ if(this.state.tip) this.setState({tip:null}); }
+  // タスク名ホバー用: 行からホバーカードのデータを作る（バーと同じカードを使い、上位の階層パスも添える）
+  tipDataFor(r){ const st=this.state, ja=st.lang==='ja', n=r.node, nm=x=>ja?x.ja:x.en;
+    const rows=this.buildRows(), byId={}; rows.forEach(x=>byId[x.id]=x);
+    const path=[]; for(let p=byId[r.parent]; p; p=byId[p.parent]) path.unshift(nm(p.node));
+    if(r.kind==='task') return { name:nm(n), path, who:n.who, ps:this.pd(n.ps), pe:this.pd(n.pe), as:n.as, ae:n.ae, prog:n.prog, pd:n.pd, status:this.statusOf(n) };
+    const a=r.agg||{}; return { name:nm(n), path, ps:a.ps, pe:a.pe, prog:a.prog||0, pd:a.pd||0, group:true }; }
+  // ツールバー等の短い説明（ブラウザ標準 title より速く出す自前ヒント）
+  hintProps(text){ return {
+    onMouseEnter:ev=>{ const rc=ev.currentTarget.getBoundingClientRect(); clearTimeout(this._hintT);
+      this._hintT=setTimeout(()=>this.setState({hint:{text, x:rc.left+rc.width/2, y:rc.bottom+6}}),120); },
+    onMouseLeave:()=>{ clearTimeout(this._hintT); if(this.state.hint) this.setState({hint:null}); },
+    onMouseDown:()=>{ clearTimeout(this._hintT); if(this.state.hint) this.setState({hint:null}); } }; }
   select(r){ if(!r) return; const rows=this.buildRows(); const idx=rows.findIndex(x=>x.id===r.id); this.setState({sel:r.id}); this.ensureVisible(idx); const el=this.boardRef.current; if(el&&!this.state.edit) el.focus({preventScroll:true}); }
   ensureVisible(idx){ const el=this.boardRef.current; if(!el||idx<0) return; const rowH=this.rh(), hH=this.T.headerH; const top=hH+idx*rowH, bot=top+rowH; if(top < el.scrollTop+hH) el.scrollTop=top-hH; else if(bot > el.scrollTop+el.clientHeight) el.scrollTop=bot-el.clientHeight; }
   onKey(ev){ const k=ev.key;
@@ -608,6 +620,7 @@ class Component extends DCLogic {
         this.state.edit && this.state.panel && this.renderPanel()),
       this.renderStatusBar(),
       this.renderTip(),
+      this.renderHint(),
       this.renderSplash(),
     );
   }
@@ -639,7 +652,7 @@ class Component extends DCLogic {
       e('span',{style:{color:T.faint,fontSize:11,whiteSpace:'nowrap'}},k),
       e('span',{style:{color:c||T.text,fontSize:11.5,fontWeight:600,fontFamily:mono,whiteSpace:'nowrap'}},v));
     const span=(s,x)=>{ if(!s||!x) return ''; const cd=this.dd(s,x)+1, wd=this.workdays(s,x); return ' ('+cd+(ja?'日':'d')+'/'+wd+(ja?'日':'wd')+')'; }; // 暦日/稼働日
-    const plan=this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)+span(d.ps,d.pe);
+    const plan=(d.ps&&d.pe)? this.fmtMD(d.ps)+' → '+this.fmtMD(d.pe)+span(d.ps,d.pe) : '—';
     const actual=(d.as?this.fmtMD(this.pd(d.as)):'—')+' → '+(d.ae?this.fmtMD(this.pd(d.ae)):(d.as?(ja?'進行中':'WIP'):'—'))+((d.as&&d.ae)?span(this.pd(d.as),this.pd(d.ae)):'');
     const body = d.group? [
         row(ja?'期間':'Span', plan),
@@ -652,14 +665,22 @@ class Component extends DCLogic {
         row(ja?'進捗':'Progress', Math.round(d.prog*100)+'%', sc),
         row(ja?'工数':'Effort', d.pd+(ja?' 人日':' pd')),
         row(ja?'状態':'Status', statusLabel, sc)];
-    const x=Math.min(tip.x+16, window.innerWidth-268), y=Math.min(tip.y+16, window.innerHeight-170);
-    return e('div',{style:{position:'fixed',left:Math.max(8,x),top:Math.max(8,y),zIndex:300,width:244,background:T.panel,border:'1px solid '+T.gridStrong,borderRadius:11,
+    const W=d.path? 300:244, H=(d.group?110:170)+(d.path&&d.path.length?18:0);
+    const x=Math.min(tip.x+16, window.innerWidth-W-24), y=Math.min(tip.y+16, window.innerHeight-H);
+    return e('div',{style:{position:'fixed',left:Math.max(8,x),top:Math.max(8,y),zIndex:300,width:W,background:T.panel,border:'1px solid '+T.gridStrong,borderRadius:11,
       boxShadow:T.dark?'0 14px 44px rgba(0,0,0,.55)':'0 14px 36px rgba(20,28,44,.2)',padding:'11px 13px',pointerEvents:'none'}},
-      e('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:9}},
-        e('span',{style:{width:9,height:9,borderRadius:2,background:sc,flex:'0 0 auto'}}),
-        e('div',{style:{fontSize:12.5,fontWeight:700,color:T.text,lineHeight:1.25}}, d.name)),
+      d.path&&d.path.length? e('div',{style:{fontSize:10.5,color:T.faint,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, d.path.join(' › ')) : null,
+      e('div',{style:{display:'flex',alignItems:'flex-start',gap:8,marginBottom:9}},
+        e('span',{style:{width:9,height:9,borderRadius:2,background:sc,flex:'0 0 auto',marginTop:3}}),
+        e('div',{style:{fontSize:12.5,fontWeight:700,color:T.text,lineHeight:1.35,wordBreak:'break-word'}}, d.name)),
       e('div',{style:{display:'flex',flexDirection:'column',gap:5}}, body));
   }
+
+  renderHint(){ const h=this.state.hint; if(!h) return null; const e=React.createElement, T=this.T;
+    const x=Math.max(190, Math.min(h.x, window.innerWidth-190));
+    return e('div',{style:{position:'fixed',left:x,top:h.y,transform:'translateX(-50%)',zIndex:320,maxWidth:380,whiteSpace:'nowrap',pointerEvents:'none',
+      background:T.dark?'#e8edf6':'#1f2735',color:T.dark?'#1a2130':'#fff',fontSize:11.5,fontWeight:600,lineHeight:1.4,padding:'6px 10px',borderRadius:7,
+      boxShadow:'0 6px 18px rgba(20,28,44,.25)',textAlign:'center',animation:'gv-in .12s ease-out'}}, h.text); }
 
   // ---------- toolbar ----------
   seg(items, active, on, T){
@@ -706,12 +727,12 @@ class Component extends DCLogic {
           ? e('span',{title:st.fileName, style:{fontSize:11.5,color:T.dim,fontWeight:600,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontFamily:"'JetBrains Mono',monospace"}}, st.fileName)
           : e('span',{style:{fontSize:11,color:T.faint,whiteSpace:'nowrap'}}, st.doc?(st.lang==='ja'?'未保存のプラン':'unsaved plan'):(st.lang==='ja'?'サンプル表示中':'sample data')),
         st.doc && st.fileName && e('button',{onClick:()=>this.reloadOrPick(),
-          title: this.fileHandle? (st.lang==='ja'?'ファイルを再読み込み（折りたたみ状態は維持）':'Reload file (keeps collapsed state)') : (st.lang==='ja'?'ファイルを選び直して再読み込み（このブラウザでは直接再読込できません）':'Re-pick file to reload (direct reload not supported in this browser)'),
+          ...this.hintProps(this.fileHandle? (st.lang==='ja'?'ファイルを再読み込み（折りたたみ状態は維持）':'Reload file (keeps collapsed state)') : (st.lang==='ja'?'ファイルを選び直して再読み込み（このブラウザでは直接再読込できません）':'Re-pick file to reload (direct reload not supported in this browser)')),
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'5px 9px',borderRadius:8,fontSize:13,fontWeight:700,fontFamily:'inherit',lineHeight:1}}, '⟳'),
-        !this.fileHandle && st.lastFile && e('button',{onClick:()=>this.openLast(), title:(st.lang==='ja'?'前回のファイルを開く: ':'Open last file: ')+st.lastFile.name,
+        !this.fileHandle && st.lastFile && e('button',{onClick:()=>this.openLast(), ...this.hintProps((st.lang==='ja'?'前回開いたファイルを開き直す: ':'Reopen last file: ')+st.lastFile.name),
           style:{border:'1px dashed '+this.hex(T.blue,.6),background:'transparent',color:T.blue,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis'}},
           '↺ '+(st.lang==='ja'?'前回: ':'Last: ')+st.lastFile.name),
-        st.doc && e('button',{onClick:()=>this.resetDoc(), title:st.lang==='ja'?'サンプルに戻す':'Reset to sample',
+        st.doc && e('button',{onClick:()=>this.resetDoc(), ...this.hintProps(st.lang==='ja'?'サンプルに戻す':'Reset to sample'),
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap'}}, st.lang==='ja'?'サンプル':'Sample')),
 
       e('div',{style:{width:1,height:26,background:T.gridStrong}}),
@@ -931,11 +952,11 @@ class Component extends DCLogic {
     return e('div',{style:{position:'sticky',top:0,zIndex:40,display:'flex',height:T.headerH,background:T.headerBg,borderBottom:'1.5px solid '+T.gridStrong,boxShadow:T.dark?'0 2px 8px rgba(0,0,0,.3)':'0 2px 5px rgba(20,28,44,.05)'}},
       e('div',{style:{position:'sticky',left:0,zIndex:2,width:leftW,flex:'0 0 auto',display:'flex',alignItems:'flex-end',background:T.headerBg,borderRight:'1.5px solid '+T.gridStrong}},
         e('div',{style:{position:'relative',alignSelf:'stretch',display:'flex',alignItems:'flex-end',width:this.nameW(),padding:'0 14px 9px',fontSize:11,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:T.faint}}, L.task,
-          e('div',{onMouseDown:ev=>this.nameResizeDown(ev), onDoubleClick:()=>this.fitNameW(),
-            title:this.state.lang==='ja'?'ドラッグで列幅を変更 / ダブルクリックで名前に合わせる':'Drag to resize / double-click to fit names',
-            onMouseEnter:ev=>{ ev.currentTarget.firstChild.style.background=T.blue; }, onMouseLeave:ev=>{ ev.currentTarget.firstChild.style.background='transparent'; },
+          (hp=>e('div',{onDoubleClick:()=>this.fitNameW(),
+            onMouseDown:ev=>{ hp.onMouseDown(); this.nameResizeDown(ev); },
+            onMouseEnter:ev=>{ hp.onMouseEnter(ev); ev.currentTarget.firstChild.style.background=T.blue; }, onMouseLeave:ev=>{ hp.onMouseLeave(); ev.currentTarget.firstChild.style.background='transparent'; },
             style:{position:'absolute',right:-4,top:0,bottom:0,width:9,cursor:'col-resize',zIndex:3,display:'flex',justifyContent:'center'}},
-            e('div',{style:{width:2,height:'100%',background:'transparent',transition:'background .12s'}}))),
+            e('div',{style:{width:2,height:'100%',background:'transparent',transition:'background .12s'}})))(this.hintProps(this.state.lang==='ja'?'ドラッグで列幅を変更 / ダブルクリックで名前に合わせる':'Drag to resize / double-click to fit names'))),
         this.visCols().map(c=>e('div',{key:c.key,style:{width:c.w,padding:'0 8px 9px',fontSize:10.5,fontWeight:700,letterSpacing:'.03em',textTransform:'uppercase',color:T.faint,textAlign:c.align,flex:'0 0 auto',whiteSpace:'nowrap',overflow:'hidden'}}, c.label))),
       e('div',{style:{position:'relative',width:g.w,flex:'0 0 auto'}},
         e('div',{style:{position:'relative',height:t1H,borderBottom:'1px solid '+T.grid}},
@@ -1019,7 +1040,7 @@ class Component extends DCLogic {
           isTask? e('span',{style:{width:6,height:6,borderRadius:st.layers.critical&&r.node.crit?'2px':'50%',background: st.layers.critical&&r.node.crit? T.crit : this.statusColor(status,T)}}):null));
     if(isProj) kids.push(e('span',{key:'pj',style:{width:8,height:8,borderRadius:2,background:T.blue,flex:'0 0 auto'}}));
     if(st.edit){
-      kids.push(e('input',{key:'nm|'+r.id+'|'+name, defaultValue:name, title:name, onClick:ev=>ev.stopPropagation(),
+      kids.push(e('input',{key:'nm|'+r.id+'|'+name, defaultValue:name, onClick:ev=>ev.stopPropagation(),
         onBlur:ev=>{ const v=ev.target.value; if(v!==name) this.setField(r.id, ja?'ja':'en', v); },
         onKeyDown:ev=>{ if(ev.key==='Enter') ev.target.blur(); ev.stopPropagation(); },
         style:{flex:1,minWidth:0,border:'1px solid '+(sel?this.hex(T.blue,.5):T.gridStrong),background:T.panel,color:T.text,borderRadius:6,padding:'3px 8px',
@@ -1032,7 +1053,7 @@ class Component extends DCLogic {
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.crit,cursor:'pointer',width:20,height:20,borderRadius:5,fontSize:11,lineHeight:1,flex:'0 0 auto',display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0}},'✕'));
       }
     } else {
-      kids.push(e('span',{key:'nm',title:name,style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:T.text,
+      kids.push(e('span',{key:'nm',onMouseEnter:ev=>this.showTip(ev,this.tipDataFor(r)),onMouseLeave:()=>this.hideTip(),style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:T.text,
         whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1, letterSpacing:isProj?'-.01em':'0'}}, name));
       if(st.layers.critical&&isTask&&r.node.crit) kids.push(e('span',{key:'cp',title:this.L.critical,style:{fontSize:8.5,fontWeight:700,color:T.crit,border:'1px solid '+this.hex(T.crit,.4),borderRadius:4,padding:'0px 3px',flex:'0 0 auto',lineHeight:'13px'}},'CP'));
     }

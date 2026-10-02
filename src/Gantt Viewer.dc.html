@@ -100,7 +100,7 @@ class Component extends DCLogic {
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.7.2 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.7.3 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -482,17 +482,17 @@ class Component extends DCLogic {
   // ---------- rows ----------
   buildRows(){
     const rows=[]; const st=this.state;
-    const walk=(n,depth,no,parentId)=>{
+    const walk=(n,depth,no,parentId,rootDone)=>{
       const kids=n.children||[];
       const kind = depth===0 ? 'project' : (kids.length? 'group':'task');
-      const row={kind, id:n.id, depth, no, node:n, parent:parentId};
+      const row={kind, id:n.id, depth, no, node:n, parent:parentId, rootDone}; // rootDone: 所属プロジェクトが全タスク完了
       if(kind!=='task') row.agg=this.agg(this.leavesOf(n).filter(x=>x!==n));
       if(n.milestones&&n.milestones.length) row.milestones=n.milestones; // v2.4: 任意階層に置ける
       rows.push(row);
-      if(kind!=='task' && !st.collapsed[n.id]) kids.forEach((c,i)=>walk(c,depth+1,no+'.'+(i+1),n.id));
+      if(kind!=='task' && !st.collapsed[n.id]) kids.forEach((c,i)=>walk(c,depth+1,no+'.'+(i+1),n.id,rootDone));
     };
     const hid=st.hiddenP||{};
-    this.DATA.forEach((p,i)=>{ if(!hid[p.id]) walk(p,0,String(i+1),null); }); // 番号は隠しても変えない
+    this.DATA.forEach((p,i)=>{ if(!hid[p.id]) walk(p,0,String(i+1),null,this.groupDone(p)); }); // 番号は隠しても変えない
     return rows;
   }
   agg(tasks){
@@ -524,6 +524,7 @@ class Component extends DCLogic {
   }
   // グループ配下のタスクがすべて完了か（集計進捗ではなく末端を直接見る。工数の有無による加重のずれに左右されない）
   groupDone(n){ const ls=this.leavesOf(n).filter(x=>x!==n); return ls.length>0 && ls.every(t=>t.prog>=1 || t.ae); }
+  groupDoneDate(n){ let m=null; this.leavesOf(n).filter(x=>x!==n).forEach(t=>{ const d=this.pd(t.ae||t.pe); if(d&&(!m||d>m)) m=d; }); return m; } // 完了日 = 実績終了の最遅
   statusColor(s,T){ return {ontrack:T.blue, done:T.done, risk:T.amber, delay:T.rose, future:T.faint}[s]; }
 
   // ---------- handlers ----------
@@ -1055,8 +1056,11 @@ class Component extends DCLogic {
           style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.crit,cursor:'pointer',width:20,height:20,borderRadius:5,fontSize:11,lineHeight:1,flex:'0 0 auto',display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0}},'✕'));
       }
     } else {
-      kids.push(e('span',{key:'nm',onMouseEnter:ev=>this.showTip(ev,this.tipDataFor(r)),onMouseLeave:()=>this.hideTip(),style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:T.text,
+      kids.push(e('span',{key:'nm',onMouseEnter:ev=>this.showTip(ev,this.tipDataFor(r)),onMouseLeave:()=>this.hideTip(),style:{fontSize: isProj?13.5:12.5, fontWeight: isProj?700:(r.kind==='group'?600:500), color:isProj&&r.rootDone?T.dim:T.text,
         whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1, letterSpacing:isProj?'-.01em':'0'}}, name));
+      if(isProj&&r.rootDone){ const dd=this.groupDoneDate(r.node);
+        kids.push(e('span',{key:'dn',style:{fontSize:9.5,fontWeight:700,color:T.done,border:'1px solid '+this.hex(T.done,.55),borderRadius:4,padding:'0 4px',flex:'0 0 auto',lineHeight:'15px',whiteSpace:'nowrap',fontFamily:"'JetBrains Mono','Noto Sans JP',monospace"}},
+          '✓ '+(ja?'完了':'Done')+(dd?' '+this.fmtMD(dd):''))); }
       if(st.layers.critical&&isTask&&r.node.crit) kids.push(e('span',{key:'cp',title:this.L.critical,style:{fontSize:8.5,fontWeight:700,color:T.crit,border:'1px solid '+this.hex(T.crit,.4),borderRadius:4,padding:'0px 3px',flex:'0 0 auto',lineHeight:'13px'}},'CP'));
     }
     return e('div',{style:{width:this.nameW(),flex:'0 0 auto',display:'flex',alignItems:'center',gap:6,padding:'0 10px 0 '+(8+r.depth*(st.edit?13:15))+'px',minWidth:0}}, kids);
@@ -1355,7 +1359,7 @@ class Component extends DCLogic {
     const e=React.createElement, T=this.T, ja=this.state.lang==='ja';
     return (r.milestones||[]).map((ms,i)=>{
       const d=this.pd(ms.date); if(!d) return null;
-      const x=this.dateToX(d,g)+g.px/2, c=ms.rose?T.rose:T.ms, sz=11;
+      const x=this.dateToX(d,g)+g.px/2, c=r.rootDone? T.done : (ms.rose?T.rose:T.ms), sz=11; // 完了プロジェクトのマイルストーンは達成済みとしてグレー
       return e('div',{key:i,title:(ja?ms.ja:ms.en)+' · '+this.fmtMD(d),style:{position:'absolute',left:x-sz/2,top:rowH/2,transform:'translateY(-50%)',display:'flex',alignItems:'center',gap:6,zIndex:7}}, // ◇の中心を日付位置に置く（ラベル幅でずらさない）
         e('div',{style:{width:sz,height:sz,background:c,transform:'rotate(45deg)',borderRadius:2,boxShadow: T.glow?'0 0 8px '+this.hex(c,.6):'0 1px 3px rgba(20,28,44,.35)',border:'1.5px solid '+(T.dark?'#0d1420':'#fff'),flex:'0 0 auto'}}),
         e('div',{style:{fontSize:10.5,fontWeight:700,color:c,whiteSpace:'nowrap',fontFamily:"'JetBrains Mono','Noto Sans JP',monospace",
@@ -1409,6 +1413,7 @@ class Component extends DCLogic {
         leaves.forEach(o=>{ const isTask=o.r.kind==='task'; const t=o.r.node;
           const ps=isTask? this.pd(t.ps):o.r.agg.ps, pe=isTask? this.pd(t.pe):o.r.agg.pe, prog=isTask? t.prog:o.r.agg.prog;
           if(!ps||!pe){ return; }
+          if(o.r.rootDone){ pts.push([todayX, o.i*rowH+rowH/2, true]); return; } // 完了プロジェクト: 本日線上を通すだけで点（○）は描かない
           let ax = this.dateToX(this.addD(ps, Math.round(this.dd(ps,pe)*prog)),g)+g.px*prog;
           if(prog>=1) ax=Math.max(ax,todayX);      // 完了済み: 予定終了が過去でも左凸（遅延表現）にしない
           else if(prog<=0) ax=Math.min(ax,todayX); // 未着手: 予定開始が未来でも右凸（前倒し表現）にしない
@@ -1418,7 +1423,7 @@ class Component extends DCLogic {
         ina=e('g',{key:'ina'},
           e('path',{d:dstr,fill:'none',stroke:this.hex(T.ina,.14),strokeWidth:5,strokeLinejoin:'round',strokeLinecap:'round'}),
           e('path',{d:dstr,fill:'none',stroke:T.ina,strokeWidth:1.8,strokeLinejoin:'round',strokeLinecap:'round',opacity:.75,style:{filter:T.glow?'drop-shadow(0 0 3px '+this.hex(T.ina,.45)+')':'none'}}),
-          pts.slice(1,-1).map((p,i)=>e('circle',{key:i,cx:p[0],cy:p[1],r:2.6,fill:T.panel,stroke:T.ina,strokeWidth:1.6,opacity:.9})));
+          pts.slice(1,-1).map((p,i)=>p[2]?null:e('circle',{key:i,cx:p[0],cy:p[1],r:2.6,fill:T.panel,stroke:T.ina,strokeWidth:1.6,opacity:.9})));
       }
     }
     const todayX=this.dateToX(this.TODAY,g);

@@ -100,7 +100,7 @@ class Component extends DCLogic {
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.7.1 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.7.2 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -522,6 +522,8 @@ class Component extends DCLogic {
     if(t.prog>0) return 'ontrack';
     return 'future';
   }
+  // グループ配下のタスクがすべて完了か（集計進捗ではなく末端を直接見る。工数の有無による加重のずれに左右されない）
+  groupDone(n){ const ls=this.leavesOf(n).filter(x=>x!==n); return ls.length>0 && ls.every(t=>t.prog>=1 || t.ae); }
   statusColor(s,T){ return {ontrack:T.blue, done:T.done, risk:T.amber, delay:T.rose, future:T.faint}[s]; }
 
   // ---------- handlers ----------
@@ -1038,7 +1040,7 @@ class Component extends DCLogic {
         e('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'currentColor'}, e('path',{d:'M7 10l5 5 5-5z'})))
       : e('span',{key:'cv',style:{width:16,flex:'0 0 auto',display:'flex',justifyContent:'center'}},
           isTask? e('span',{style:{width:6,height:6,borderRadius:st.layers.critical&&r.node.crit?'2px':'50%',background: st.layers.critical&&r.node.crit? T.crit : this.statusColor(status,T)}}):null));
-    if(isProj) kids.push(e('span',{key:'pj',style:{width:8,height:8,borderRadius:2,background:T.blue,flex:'0 0 auto'}}));
+    if(isProj) kids.push(e('span',{key:'pj',style:{width:8,height:8,borderRadius:2,background:this.groupDone(r.node)?T.done:T.blue,flex:'0 0 auto'}}));
     if(st.edit){
       kids.push(e('input',{key:'nm|'+r.id+'|'+name, defaultValue:name, onClick:ev=>ev.stopPropagation(),
         onBlur:ev=>{ const v=ev.target.value; if(v!==name) this.setField(r.id, ja?'ja':'en', v); },
@@ -1318,7 +1320,7 @@ class Component extends DCLogic {
     const x1=this.dateToX(a.ps,g), x2=this.dateToX(a.pe,g)+g.px, w=Math.max(x2-x1,4);
     const isProj=r.kind==='project';
     const h=isProj?7:5, top=(rowH-h)/2;
-    const col=isProj?T.blue:T.dim;
+    const col=this.groupDone(r.node)? T.done : (isProj?T.blue:T.dim); // 完了したグループは完了色にして「終わったもの」を一目で区別
     const kids=[
       e('div',{key:'bar',style:{position:'absolute',left:x1,top,width:w,height:h}},
         e('div',{style:{position:'absolute',inset:0,borderRadius:h/2,background:this.hex(col,T.dark?.28:.2)}}),

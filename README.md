@@ -14,6 +14,7 @@ v2 で**編集モード**を搭載: セルのインライン編集、行の追�
 ## クイックスタート
 
 **インストール不要** — ブラウザでそのまま使えます: **https://chidakiyo.github.io/json-gantt-viewer/**
+使い方の紹介ページ（ヘルプ）: **https://chidakiyo.github.io/json-gantt-viewer/help.html**（ビューアー右上の「?」からも開けます）
 （読み込んだ JSON はブラウザ内でのみ処理され、どこにも送信されません）
 
 ローカルで使う場合:

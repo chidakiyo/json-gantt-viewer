@@ -100,7 +100,7 @@ class Component extends DCLogic {
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.7.3 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.8.0 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -788,6 +788,10 @@ class Component extends DCLogic {
       e('div',{style:{position:'relative'},'data-menu':true},
         iconBtn('⚙', st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'})), L.prefs),
         st.openMenu==='design'&&this.renderDesignMenu()),
+      // ヘルプページ（リポジトリ直下の help.html。dist/ から見て1つ上）
+      e('a',{href:'../help.html', target:'_blank', rel:'noopener', ...this.hintProps(st.lang==='ja'?'ヘルプ・使い方（新しいタブ）':'Help & guide (new tab)'),
+        style:{display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,border:'1px solid '+T.gridStrong,borderRadius:'50%',flex:'0 0 auto',
+          background:T.panel,color:T.dim,fontSize:13,fontWeight:700,textDecoration:'none',fontFamily:'inherit'}}, '?'),
     );
   }
 

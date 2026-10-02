@@ -83,9 +83,14 @@ class Component extends DCLogic {
       if (inField) return;
       if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) this.redo(); else this.undo(); }
     });
-    this._bootT = setTimeout(() => this.setState({ booted: true }), 520);
+    // 起動スプラッシュ: dist では外枠の gv-boot（sync-dist が差し込む）が起動直後から同じ見た目で出ているので、
+    // 描画が整ったらそれをフェードアウトするだけ（2段階の切り替わりを見せない）。src 直開き時は自前の renderSplash。
+    const gb = window.__gvBoot, minShow = 450;
+    const wait = Math.max(0, minShow - (performance.now() - (gb ? gb.t0 : performance.now())));
+    this._bootT = setTimeout(() => requestAnimationFrame(() => { this.setState({ booted: true }); if (gb) gb.done(); }), wait);
     this._pollT = setInterval(() => this.pollFile(), 1500); // 外部変更のポーリング（File System Access API で開いた場合のみ動く）
     this.recallHandle();
+    this.syncTitle();
   }
   componentWillUnmount(){ document.removeEventListener('mousedown', this._closeMenu); document.removeEventListener('keydown', this._keys); clearTimeout(this._bootT); clearTimeout(this._asT); clearInterval(this._pollT); }
 
@@ -93,14 +98,15 @@ class Component extends DCLogic {
   get PREF_KEY(){ return 'jsonGanttViewer.prefs.v1'; }
   loadPrefs(){ try{ const s=localStorage.getItem(this.PREF_KEY); return s? JSON.parse(s):{}; }catch(e){ return {}; } }
   savePrefs(){ try{ const st=this.state; localStorage.setItem(this.PREF_KEY, JSON.stringify({ lang:st.lang, variant:st.variant, density:st.density, palette:st.palette, mode:st.mode, layers:st.layers, cols:st.cols, barLabels:st.barLabels, autoSave:st.autoSave, autoReload:st.autoReload, zoom:st.zoom, nameAdd:st.nameAdd })); }catch(e){} }
-  componentDidUpdate(pp, ps){ this.syncView(); try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom','nameAdd']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs();
+  componentDidUpdate(pp, ps){ this.syncView(); this.syncTitle(); try{ if(!ps){ this.savePrefs(); return; } const k=['lang','variant','density','palette','mode','layers','cols','barLabels','autoSave','autoReload','zoom','nameAdd']; if(k.some(x=>ps[x]!==this.state[x])) this.savePrefs();
  }catch(e){ this.savePrefs(); } }
   // 表示状態の変化を自前で検知して保存（ランタイムは componentDidUpdate に前回 state を渡さないことがあるため）
+  syncTitle(){ try{ const t=(this.META[this.state.lang]||{}).title||this.L.title; if(document.title!==t) document.title=t; }catch(e){} } // ブラウザのタブに計画のタイトルを出す
   syncView(){ const st=this.state, k=[st.collapsed,st.hiddenP,st.outLv,st.fileName], p=this._viewSnap;
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.8.0 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.8.1 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -629,6 +635,7 @@ class Component extends DCLogic {
   }
 
   renderSplash(){
+    if(window.__gvBoot) return null; // dist: 外枠の gv-boot が同じ見た目で表示中
     const e=React.createElement, T=this.T, booted=this.state.booted;
     return e('div',{style:{position:'absolute',inset:0,zIndex:500,background:T.bg,display:'flex',alignItems:'center',justifyContent:'center',
       opacity:booted?0:1,visibility:booted?'hidden':'visible',transition:'opacity .38s ease, visibility 0s linear .38s',pointerEvents:booted?'none':'auto'}},

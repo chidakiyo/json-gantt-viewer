@@ -25,6 +25,13 @@ node scripts/sync-dist.mjs
 
 日々の変更（描画ロジック・配色・インラインスタイル・props・尺度切替など）はすべて (A) に閉じるので、これで足りる。
 
+加えて **(C) 外枠の起動スプラッシュ（gv-boot）** も差し込む。バンドラー既定の読み込み画面（全画面に引き伸ばしたサムネイル SVG ＋「Unpacking...」）を、ビューアーの起動スプラッシュと同じ見た目の要素に置き換える。
+
+- 色は src の `buildTheme` を Node 上で評価して「構造 × 配色」全組み合わせ分を生成し、起動時に localStorage の表示設定から選ぶ（テーマ定義を変えれば自動で追従）。
+- `document.documentElement.replaceWith`（バンドラーの展開処理）を跨いで同じ要素を表示し続け、アプリの `componentDidMount` が `window.__gvBoot.done()` でフェードアウトする。`window.__gvBoot` がある間、アプリ側の `renderSplash` は何も描かない。
+- 展開エラー時はスプラッシュを消して、バンドラーのエラー表示を見せる（20秒の保険タイマーもあり）。
+- 目印コメント `<!--gv-boot-->` / `<!--gv-boot:head-->` で囲んでいるので、何度実行しても同じ結果になる。Design 環境で再バンドルした dist にも、次回の同期で自動的に再適用される。
+
 ## このスクリプトでは同期できないもの（＝ Design 環境で再バンドルが必要）
 
 - `<helmet>` の中身: `@font-face` / `@keyframes` / スクロールバー等の `<style>`、フォント `<link>`

@@ -106,7 +106,7 @@ class Component extends DCLogic {
     if(p && k.every((x,i)=>x===p[i])) return; this._viewSnap=k; if(p) this.saveView(); }
 
   // ---------- constants ----------
-  get VERSION(){ return 'v2.8.1 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
+  get VERSION(){ return 'v2.9.0 · 2026-10-02'; } // リリース時にここを更新（sync-dist で dist にも反映される）
   get TODAY(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0); }
   get ASSIGNEES(){ return (this.state.doc && this.state.doc.assignees) || this._defAssignees; }
   get _defAssignees(){ return {
@@ -731,46 +731,46 @@ class Component extends DCLogic {
         e('input',{type:'file', accept:'.json,application/json', ref:this.fileRef, onChange:ev=>this.openFile(ev), style:{display:'none'}}),
         e('button',{onClick:()=>this.openPicker(),
           style:{border:'1px solid '+T.blue, background:this.hex(T.blue,T.dark?.18:.10), color:T.blue, cursor:'pointer', padding:'7px 13px', borderRadius:8, fontSize:12.5, fontWeight:700, fontFamily:'inherit', display:'inline-flex', alignItems:'center', gap:7, whiteSpace:'nowrap'}},
-          e('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}, e('path',{d:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'})),
+          this.ico('open',16),
           st.lang==='ja'?'ファイルを開く':'Open file'),
         st.fileName
           ? e('span',{title:st.fileName, style:{fontSize:11.5,color:T.dim,fontWeight:600,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontFamily:"'JetBrains Mono',monospace"}}, st.fileName)
           : e('span',{style:{fontSize:11,color:T.faint,whiteSpace:'nowrap'}}, st.doc?(st.lang==='ja'?'未保存のプラン':'unsaved plan'):(st.lang==='ja'?'サンプル表示中':'sample data')),
-        st.doc && st.fileName && e('button',{onClick:()=>this.reloadOrPick(),
+        st.doc && st.fileName && e('button',{onClick:()=>this.reloadOrPick(), 'aria-label':st.lang==='ja'?'ファイルを再読み込み':'Reload file',
           ...this.hintProps(this.fileHandle? (st.lang==='ja'?'ファイルを再読み込み（折りたたみ状態は維持）':'Reload file (keeps collapsed state)') : (st.lang==='ja'?'ファイルを選び直して再読み込み（このブラウザでは直接再読込できません）':'Re-pick file to reload (direct reload not supported in this browser)')),
-          style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'5px 9px',borderRadius:8,fontSize:13,fontWeight:700,fontFamily:'inherit',lineHeight:1}}, '⟳'),
+          style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'5px 7px',borderRadius:8,display:'inline-flex',alignItems:'center',fontFamily:'inherit'}}, this.ico('reload',16)),
         !this.fileHandle && st.lastFile && e('button',{onClick:()=>this.openLast(), ...this.hintProps((st.lang==='ja'?'前回開いたファイルを開き直す: ':'Reopen last file: ')+st.lastFile.name),
-          style:{border:'1px dashed '+this.hex(T.blue,.6),background:'transparent',color:T.blue,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis'}},
-          '↺ '+(st.lang==='ja'?'前回: ':'Last: ')+st.lastFile.name),
+          style:{border:'1px dashed '+this.hex(T.blue,.6),background:'transparent',color:T.blue,cursor:'pointer',padding:'5px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',maxWidth:220,display:'inline-flex',alignItems:'center',gap:5}},
+          this.ico('history',14), e('span',{style:{overflow:'hidden',textOverflow:'ellipsis'}}, (st.lang==='ja'?'前回: ':'Last: ')+st.lastFile.name)),
         st.doc && e('button',{onClick:()=>this.resetDoc(), ...this.hintProps(st.lang==='ja'?'サンプルに戻す':'Reset to sample'),
-          style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'6px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap'}}, st.lang==='ja'?'サンプル':'Sample')),
+          style:{border:'1px solid '+T.gridStrong,background:T.panel,color:T.dim,cursor:'pointer',padding:'5px 9px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:5}}, this.ico('sample',14), st.lang==='ja'?'サンプル':'Sample')),
 
       e('div',{style:{width:1,height:26,background:T.gridStrong}}),
       e('div',{style:{display:'flex',alignItems:'center',gap:8,flex:'0 0 auto'}},
         e('span',{style:{fontSize:11,fontWeight:600,color:T.faint,whiteSpace:'nowrap'}}, L.scale),
         this.seg([{k:'day',label:L.day},{k:'week',label:L.week},{k:'month',label:L.month}], st.mode, m=>this.setMode(m), T),
         (()=>{ const z=st.zoom||1;
-          const zbtn=(sym,dir,dis,tt)=>e('button',{key:sym,onClick:()=>this.stepZoom(dir),disabled:dis,title:tt,'aria-label':tt,
+          const zbtn=(sym,dir,dis,tt,k)=>e('button',{key:k,onClick:()=>this.stepZoom(dir),disabled:dis,title:tt,'aria-label':tt,
             style:{border:'none',background:'transparent',color:dis?this.hex(T.faint,.45):T.dim,cursor:dis?'default':'pointer',width:24,height:24,borderRadius:6,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,padding:0,lineHeight:1},
             onMouseEnter:ev=>{ if(!dis) ev.currentTarget.style.background=T.weekend; }, onMouseLeave:ev=>{ ev.currentTarget.style.background='transparent'; }}, sym);
           return e('div',{key:'zoom',title:L.zoomHint,style:{display:'inline-flex',alignItems:'center',gap:1,border:'1px solid '+T.gridStrong,background:T.panel,borderRadius:8,padding:'2px 3px'}},
-            zbtn('−',-1, z<=this.ZOOMS[0], L.zoomOut),
+            zbtn(this.ico('zoomOut',15),-1, z<=this.ZOOMS[0], L.zoomOut, 'zo'),
             e('button',{key:'pct',onClick:()=>this.setZoom(1),title:L.zoomReset,'aria-label':L.zoomReset,
               style:{border:'none',background:'transparent',color:z===1?T.faint:T.dim,cursor:'pointer',minWidth:38,height:24,padding:'0 2px',fontSize:10.5,fontWeight:600,fontFamily:"'JetBrains Mono','Inter',monospace",textAlign:'center'}},
               Math.round(z*100)+'%'),
-            zbtn('+',1, z>=this.ZOOMS[this.ZOOMS.length-1], L.zoomIn)); })()),
+            zbtn(this.ico('zoomIn',15),1, z>=this.ZOOMS[this.ZOOMS.length-1], L.zoomIn, 'zi')); })()),
 
       e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('◧ '+L.layers, st.openMenu==='layers', ()=>this.setState(s=>({openMenu:s.openMenu==='layers'?null:'layers'}))),
+        iconBtn(e(React.Fragment,null,this.ico('layers',15),L.layers), st.openMenu==='layers', ()=>this.setState(s=>({openMenu:s.openMenu==='layers'?null:'layers'}))),
         st.openMenu==='layers'&&this.renderLayersMenu()),
       !st.edit && e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('▤ '+L.columns, st.openMenu==='cols', ()=>this.setState(s=>({openMenu:s.openMenu==='cols'?null:'cols'}))),
+        iconBtn(e(React.Fragment,null,this.ico('columns',15),L.columns), st.openMenu==='cols', ()=>this.setState(s=>({openMenu:s.openMenu==='cols'?null:'cols'}))),
         st.openMenu==='cols'&&this.renderColsMenu()),
       !st.edit && e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('▦ '+L.labels, st.openMenu==='labels', ()=>this.setState(s=>({openMenu:s.openMenu==='labels'?null:'labels'}))),
+        iconBtn(e(React.Fragment,null,this.ico('labels',15),L.labels), st.openMenu==='labels', ()=>this.setState(s=>({openMenu:s.openMenu==='labels'?null:'labels'}))),
         st.openMenu==='labels'&&this.renderLabelsMenu()),
       this.DATA.length>1 && e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('▧ '+L.projects+(this.VDATA.length<this.DATA.length?' '+this.VDATA.length+'/'+this.DATA.length:''), st.openMenu==='projects', ()=>this.setState(s=>({openMenu:s.openMenu==='projects'?null:'projects'}))),
+        iconBtn(e(React.Fragment,null,this.ico('projects',15),L.projects+(this.VDATA.length<this.DATA.length?' '+this.VDATA.length+'/'+this.DATA.length:'')), st.openMenu==='projects', ()=>this.setState(s=>({openMenu:s.openMenu==='projects'?null:'projects'}))),
         st.openMenu==='projects'&&this.renderProjectsMenu()),
 
       e('div',{style:{display:'flex',alignItems:'center',gap:8,flex:'0 0 auto'}},
@@ -793,12 +793,12 @@ class Component extends DCLogic {
 
       // デザイン・配色・言語・リセットを1つの設定メニューに集約（ヘッダー幅の圧縮）
       e('div',{style:{position:'relative'},'data-menu':true},
-        iconBtn('⚙', st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'})), L.prefs),
+        iconBtn(this.ico('palette',16), st.openMenu==='design', ()=>this.setState(s=>({openMenu:s.openMenu==='design'?null:'design'})), L.prefs),
         st.openMenu==='design'&&this.renderDesignMenu()),
       // ヘルプページ（リポジトリ直下の help.html。dist/ から見て1つ上）
-      e('a',{href:'../help.html', target:'_blank', rel:'noopener', ...this.hintProps(st.lang==='ja'?'ヘルプ・使い方（新しいタブ）':'Help & guide (new tab)'),
-        style:{display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,border:'1px solid '+T.gridStrong,borderRadius:'50%',flex:'0 0 auto',
-          background:T.panel,color:T.dim,fontSize:13,fontWeight:700,textDecoration:'none',fontFamily:'inherit'}}, '?'),
+      e('a',{href:'../help.html', target:'_blank', rel:'noopener', 'aria-label':st.lang==='ja'?'ヘルプ':'Help', ...this.hintProps(st.lang==='ja'?'ヘルプ・使い方（新しいタブ）':'Help & guide (new tab)'),
+        style:{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'6px 9px',border:'1px solid '+T.gridStrong,borderRadius:8,flex:'0 0 auto',
+          background:T.panel,color:T.dim,textDecoration:'none'}}, this.ico('help',16)),
     );
   }
 
@@ -812,9 +812,10 @@ class Component extends DCLogic {
         display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,
         borderRadius:8, fontSize:12.5, fontWeight:opts.primary?700:600, fontFamily:'inherit', whiteSpace:'nowrap', opacity:opts.disabled?.55:1, transition:'all .15s'}}, label); };
     const sel=st.sel; const selRow=sel? this.buildRows().find(r=>r.id===sel):null;
+    const nolead=t=>String(t).replace(/^[＋+]\s*/,''); // 「＋ タスク」の＋はアイコンで表すので外す
     return e('div',{style:{flex:'0 0 auto',background:T.dark?this.hex('#5b8def',.06):this.mixHex(T.blue,T.headerBg,.045),borderBottom:'1px solid '+T.gridStrong,
       padding:'7px 18px',display:'flex',alignItems:'center',flexWrap:'wrap',gap:10,rowGap:7,zIndex:55}},
-      btn(e(React.Fragment,null, L.save, st.dirty&&e('span',{style:{width:7,height:7,borderRadius:'50%',background:'#ffd66e',display:'inline-block'}})), ()=>this.save(), {primary:true, title:'Ctrl+S'}),
+      btn(e(React.Fragment,null, this.ico('save',15,'#fff'), L.save, st.dirty&&e('span',{style:{width:7,height:7,borderRadius:'50%',background:'#ffd66e',display:'inline-block'}})), ()=>this.save(), {primary:true, title:'Ctrl+S'}),
       e('label',{style:{display:'inline-flex',alignItems:'center',gap:7,fontSize:12,fontWeight:600,color:T.dim,cursor:'pointer',userSelect:'none'}},
         L.autoSave,
         e('span',{onClick:()=>this.setState(s=>({autoSave:!s.autoSave}),()=>this.maybeAutosave()),
@@ -825,19 +826,19 @@ class Component extends DCLogic {
         e('span',{onClick:()=>this.setState(s=>({autoReload:!s.autoReload})),
           style:{width:32,height:18,borderRadius:9,background:st.autoReload?T.blue:T.gridStrong,position:'relative',display:'inline-block',transition:'background .15s'}},
           e('span',{style:{position:'absolute',left:st.autoReload?16:2,top:2,width:14,height:14,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 2px rgba(0,0,0,.25)',transition:'left .15s'}}))),
-      st.extChanged&&btn(L.reloadNow, ()=>this.forceReload(), {accent:true, title:L.extChanged}),
+      st.extChanged&&btn(e(React.Fragment,null,this.ico('reload',15),L.reloadNow.replace(/^⟳\s*/,'')), ()=>this.forceReload(), {accent:true, title:L.extChanged}),
       e('span',{style:{fontSize:10.5,color:T.faint,fontWeight:600}}, st.dirty? '● '+L.unsaved : L.savedOk),
       e('div',{style:{width:1,height:22,background:T.gridStrong}}),
-      btn('↶', ()=>this.undo(), {square:true, disabled:!this.past.length, title:'Ctrl+Z'}),
-      btn('↷', ()=>this.redo(), {square:true, disabled:!this.future.length, title:'Ctrl+Shift+Z'}),
+      btn(this.ico('undo',16), ()=>this.undo(), {square:true, disabled:!this.past.length, title:'Ctrl+Z'}),
+      btn(this.ico('redo',16), ()=>this.redo(), {square:true, disabled:!this.future.length, title:'Ctrl+Shift+Z'}),
       e('div',{style:{width:1,height:22,background:T.gridStrong}}),
-      btn(L.addTask, ()=>{ if(sel) this.addSibling(sel); else { const rows=this.buildRows(); const last=rows[rows.length-1]; if(last) this.addSibling(last.id); } }, {accent:true}),
-      btn(L.addChild, ()=>sel&&this.addChild(sel), {accent:true, disabled:!sel}),
-      btn(L.addProj, ()=>this.addProject(), {accent:true}),
-      selRow&&selRow.kind!=='task'&&btn(L.addMs, ()=>{ this.mutate(d=>{ const r=this.findNode(d,sel); if(r){ r.node.milestones=r.node.milestones||[]; r.node.milestones.push({date:this.iso(this.TODAY), ja:this.L.newMsName, en:'Milestone', rose:false}); } }); this.setState({panel:true, panelMode:'node'}); }, {accent:true}),
+      btn(e(React.Fragment,null,this.ico('addTask',15),nolead(L.addTask)), ()=>{ if(sel) this.addSibling(sel); else { const rows=this.buildRows(); const last=rows[rows.length-1]; if(last) this.addSibling(last.id); } }, {accent:true}),
+      btn(e(React.Fragment,null,this.ico('addChild',15),nolead(L.addChild)), ()=>sel&&this.addChild(sel), {accent:true, disabled:!sel}),
+      btn(e(React.Fragment,null,this.ico('addProj',15),nolead(L.addProj)), ()=>this.addProject(), {accent:true}),
+      selRow&&selRow.kind!=='task'&&btn(e(React.Fragment,null,this.ico('addMs',15),nolead(L.addMs)), ()=>{ this.mutate(d=>{ const r=this.findNode(d,sel); if(r){ r.node.milestones=r.node.milestones||[]; r.node.milestones.push({date:this.iso(this.TODAY), ja:this.L.newMsName, en:'Milestone', rose:false}); } }); this.setState({panel:true, panelMode:'node'}); }, {accent:true}),
       e('div',{style:{width:1,height:22,background:T.gridStrong}}),
-      btn('⚙ '+L.settings, ()=>this.setState(s=>({panel:!(s.panel&&s.panelMode==='settings'), panelMode:'settings'}))),
-      btn(L.newFile, ()=>this.newDoc()),
+      btn(e(React.Fragment,null,this.ico('sliders',15),L.settings), ()=>this.setState(s=>({panel:!(s.panel&&s.panelMode==='settings'), panelMode:'settings'}))),
+      btn(e(React.Fragment,null,this.ico('newFile',15),L.newFile), ()=>this.newDoc()),
       e('div',{style:{flex:1}}),
       e('span',{style:{fontSize:10.5,color:T.faint,whiteSpace:'nowrap'}}, L.selHint+' ・ Tab/Shift+Tab'));
   }
@@ -1646,6 +1647,35 @@ class Component extends DCLogic {
     if(/\s/.test(s)){ const p=s.split(/\s+/); return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase(); }
     if(/[぀-ヿ㐀-鿿豈-﫿]/.test(s)) return s.slice(0,2);
     return s.slice(0,2).toUpperCase(); }
+  // ---------- アイコン（24px グリッドの線画。f=アクセント色の淡い面＋線 / s=塗りのみ / acc=塗りをアクセント色に） ----------
+  get ICONS(){ return {
+      open:[["path",{"d":"M3.6 9.2V6.6a2 2 0 0 1 2-2h3.3l2 2.1h6.9a2 2 0 0 1 2 2v.6"}],["rect",{"x":7,"y":8.2,"width":10.5,"height":5,"rx":1,"f":1}],["path",{"d":"M3.1 11.9a1.5 1.5 0 0 1 1.5-1.7h14.9a1.4 1.4 0 0 1 1.36 1.75l-1.55 6.3a2 2 0 0 1-1.94 1.5H5.3a2 2 0 0 1-1.97-1.66z","f":1}]],
+      reload:[["circle",{"cx":12,"cy":12.4,"r":7.6,"s":1,"o":0.2,"acc":1}],["path",{"d":"M19.6 12.4A7.6 7.6 0 1 1 17.2 6.6"}],["path",{"d":"M19.8 3.8v4.6h-4.6"}]],
+      history:[["circle",{"cx":12,"cy":12.4,"r":7.6,"f":1}],["path",{"d":"M4.4 8.2A8.4 8.4 0 0 1 6.2 6"}],["path",{"d":"M3.6 4.4v4h4"}],["path",{"d":"M12 8.4v4.2l2.9 1.8"}]],
+      sample:[["path",{"d":"M9.4 3.6h5.2"}],["path",{"d":"M10.4 3.6v5.3L5.5 17.2a2.1 2.1 0 0 0 1.8 3.2h9.4a2.1 2.1 0 0 0 1.8-3.2l-4.9-8.3V3.6"}],["path",{"d":"M7.7 14.2h8.6l2.1 3.5a1.5 1.5 0 0 1-1.3 2.3H6.9a1.5 1.5 0 0 1-1.3-2.3z","s":1,"o":0.22}],["circle",{"cx":10.6,"cy":16.8,"r":0.95,"s":1}],["circle",{"cx":13.6,"cy":15.6,"r":0.7,"s":1}]],
+      zoomIn:[["circle",{"cx":10.6,"cy":10.6,"r":6.4,"f":1}],["path",{"d":"M15.4 15.4l4.6 4.6"}],["path",{"d":"M10.6 8.2v4.8"}],["path",{"d":"M8.2 10.6h4.8"}]],
+      zoomOut:[["circle",{"cx":10.6,"cy":10.6,"r":6.4,"f":1}],["path",{"d":"M15.4 15.4l4.6 4.6"}],["path",{"d":"M8.2 10.6h4.8"}]],
+      layers:[["path",{"d":"M12 3.6 3.4 8.1 12 12.6l8.6-4.5z","f":1}],["path",{"d":"M3.4 12.2 12 16.7l8.6-4.5"}],["path",{"d":"M3.4 16.1 12 20.6l8.6-4.5"}]],
+      columns:[["rect",{"x":3.4,"y":4.4,"width":17.2,"height":15.2,"rx":2.6}],["path",{"d":"M3.4 7a2.6 2.6 0 0 1 2.6-2.6h12A2.6 2.6 0 0 1 20.6 7v2.2H3.4z","s":1,"o":0.2}],["path",{"d":"M3.4 9.2h17.2"}],["path",{"d":"M9.2 9.2v10.4"}],["path",{"d":"M14.8 9.2v10.4"}]],
+      labels:[["rect",{"x":3,"y":9.4,"width":9.4,"height":5.2,"rx":2.6,"f":1}],["path",{"d":"M15.6 8.6h4a1.4 1.4 0 0 1 1.4 1.4v4a1.4 1.4 0 0 1-1.4 1.4h-4L13.8 12z","f":1}],["circle",{"cx":16.6,"cy":12,"r":0.8,"s":1}],["path",{"d":"M4.6 5.4h5.2"}],["path",{"d":"M4.6 18.6h3.4"}]],
+      projects:[["rect",{"x":3.4,"y":7.2,"width":17.2,"height":12.4,"rx":2.6,"f":1}],["path",{"d":"M8.8 7.2V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.6"}],["path",{"d":"M3.4 12.6h17.2"}],["path",{"d":"M10.6 12.6v1.6h2.8v-1.6"}]],
+      palette:[["path",{"d":"M12 3.4a8.6 8.6 0 1 0 0 17.2c1.15 0 1.9-.85 1.9-1.85 0-.5-.2-.95-.5-1.3-.3-.35-.48-.8-.48-1.3 0-1.05.85-1.9 1.9-1.9h2.15a4.1 4.1 0 0 0 4.1-4.1C21.07 7.05 17.1 3.4 12 3.4z","f":1}],["circle",{"cx":7.6,"cy":11.6,"r":1.25,"s":1}],["circle",{"cx":9.4,"cy":7.6,"r":1.25,"s":1}],["circle",{"cx":13.9,"cy":6.8,"r":1.25,"s":1}],["circle",{"cx":17.2,"cy":9.6,"r":1.25,"s":1}]],
+      help:[["circle",{"cx":12,"cy":12,"r":8.6,"f":1}],["path",{"d":"M9.5 9.6a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.1-2.5 3.6"}],["circle",{"cx":12,"cy":17,"r":0.95,"s":1}]],
+      undo:[["path",{"d":"M8.8 14.2 4.4 9.8l4.4-4.4"}],["path",{"d":"M4.4 9.8h9.9a5.3 5.3 0 0 1 0 10.6H11"}]],
+      redo:[["path",{"d":"M15.2 14.2l4.4-4.4-4.4-4.4"}],["path",{"d":"M19.6 9.8H9.7a5.3 5.3 0 0 0 0 10.6H13"}]],
+      addTask:[["rect",{"x":3.8,"y":3.8,"width":16.4,"height":16.4,"rx":4.6,"f":1}],["path",{"d":"M12 8.4v7.2"}],["path",{"d":"M8.4 12h7.2"}]],
+      addChild:[["path",{"d":"M6 4v8.2a3.2 3.2 0 0 0 3.2 3.2h2.6"}],["rect",{"x":12.6,"y":11.2,"width":8,"height":8,"rx":2.4,"f":1}],["path",{"d":"M16.6 13.4v3.6"}],["path",{"d":"M14.8 15.2h3.6"}],["circle",{"cx":6,"cy":4,"r":1.3,"s":1}]],
+      addProj:[["path",{"d":"M3.4 7.4a2 2 0 0 1 2-2h3.6l2.1 2.1h7.5a2 2 0 0 1 2 2v8.1a2 2 0 0 1-2 2h-13.2a2 2 0 0 1-2-2z","f":1}],["path",{"d":"M12 10.6v5.8"}],["path",{"d":"M9.1 13.5h5.8"}]],
+      addMs:[["path",{"d":"M10.6 3.9a2 2 0 0 1 2.8 0l6.7 6.7a2 2 0 0 1 0 2.8l-6.7 6.7a2 2 0 0 1-2.8 0l-6.7-6.7a2 2 0 0 1 0-2.8z","f":1}],["path",{"d":"M12 9.2v5.6"}],["path",{"d":"M9.2 12h5.6"}]],
+      sliders:[["path",{"d":"M4 7h8.4"}],["path",{"d":"M17.6 7H20"}],["circle",{"cx":15,"cy":7,"r":2.4,"f":1}],["path",{"d":"M4 17h2.4"}],["path",{"d":"M11.6 17H20"}],["circle",{"cx":9,"cy":17,"r":2.4,"f":1}],["path",{"d":"M4 12h11.6"}],["path",{"d":"M18.6 12H20"}]],
+      newFile:[["path",{"d":"M6.6 3.4h6.9l4.9 4.9v10.2a2.1 2.1 0 0 1-2.1 2.1H6.6a2.1 2.1 0 0 1-2.1-2.1V5.5a2.1 2.1 0 0 1 2.1-2.1z","f":1}],["path",{"d":"M13.5 3.4v3.4a1.5 1.5 0 0 0 1.5 1.5h3.4"}],["path",{"d":"M11.4 11.2v5.4"}],["path",{"d":"M8.7 13.9h5.4"}]],
+      save:[["path",{"d":"M4.4 14.6v3a2.2 2.2 0 0 0 2.2 2.2h10.8a2.2 2.2 0 0 0 2.2-2.2v-3","f":1}],["path",{"d":"M12 3.8v10.6"}],["path",{"d":"M7.9 10.4 12 14.5l4.1-4.1"}]]
+  }; }
+  ico(name,size,acc){ const e=React.createElement, parts=this.ICONS[name]; if(!parts) return null; const A=acc||this.T.blue;
+    return e('svg',{width:size||15,height:size||15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,style:{flex:'0 0 auto',display:'block'}},
+      parts.map(([t,a],i)=>{ const {f,s:solid,o,acc:pa,...at}=a;
+        const paint= solid? {fill:pa?A:'currentColor',fillOpacity:o||1,stroke:'none'} : (f? {fill:A,fillOpacity:.26} : {});
+        return e(t,{key:i,...at,...paint}); })); }
   measureText(s,size,weight){ if(!this.__mc){ this.__mc=document.createElement('canvas').getContext('2d'); } this.__mc.font=(weight||600)+' '+(size||11)+"px Inter,'Noto Sans JP',sans-serif"; return this.__mc.measureText(String(s)).width; }
   mixHex(c,base,amt){ const p=x=>{x=x.replace('#','');if(x.length===3)x=x.split('').map(y=>y+y).join('');return [parseInt(x.slice(0,2),16),parseInt(x.slice(2,4),16),parseInt(x.slice(4,6),16)];}; const a=p(c),b=p(base); const m=b.map((v,i)=>Math.round(v+(a[i]-v)*amt)); return `rgb(${m[0]},${m[1]},${m[2]})`; }
   lighten(c,amt){ c=c.replace('#',''); if(c.length===3)c=c.split('').map(x=>x+x).join(''); let r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),b=parseInt(c.slice(4,6),16); r=Math.round(r+(255-r)*amt);g=Math.round(g+(255-g)*amt);b=Math.round(b+(255-b)*amt); return `rgb(${r},${g},${b})`; }
